@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Legal reader browser test</title>
+  <style>
+    body { margin: 0; padding: 30px; color: #dce9e5; background: #07110f; font: 18px system-ui, sans-serif; }
+    #report { padding: 24px; border: 2px solid #d7a94f; border-radius: 12px; }
+    .pass { border-color: #53d6b2 !important; color: #9ef0d8; }
+    .fail { border-color: #ef7e71 !important; color: #ffb3a9; }
+    iframe { width: 1100px; height: 650px; margin-top: 20px; border: 1px solid #315f56; }
+  </style>
+</head>
+<body>
+  <div id="report">Running schema-aware legal reader tests…</div>
+  <iframe id="application" src="../portable/immigration-search.html"></iframe>
+  <script>
+    const usCode = `<?xml version="1.0" encoding="UTF-8"?>
+      <uscDoc xmlns="http://xml.house.gov/schemas/uslm/1.0">
+        <meta><docPublicationName>Online test release</docPublicationName></meta>
+        <main><title><num>Title 8—</num><heading>ALIENS AND NATIONALITY</heading>
+          <chapter identifier="/us/usc/t8/ch12"><num>CHAPTER 12—</num><heading>IMMIGRATION AND NATIONALITY</heading>
+            <section identifier="/us/usc/t8/s1153"><num>§ 1153.</num><heading>Allocation of immigrant visas</heading>
+              <subsection identifier="/us/usc/t8/s1153/b"><num>(b)</num><heading>Preference allocation</heading>
+                <paragraph><num>(2)</num><content>Visas shall be available to qualified immigrants who are members of the professions.</content></paragraph>
+              </subsection>
+              <notes><note topic="amendments"><p>Amended by a public law.</p></note></notes>
+            </section>
+            <section identifier="/us/usc/t8/s1154"><num>§ 1154.</num><heading>Procedure for granting immigrant status</heading>
+              <p>Eligible petitioners may file a petition.</p><ref href="/us/usc/t8/s1153">section 1153</ref>
+            </section>
+          </chapter>
+        </title></main>
+      </uscDoc>`;
+    const ecfr = `<?xml version="1.0" encoding="UTF-8"?>
+      <DLPSTEXTCLASS><HEADER><TITLE>Title 8: Aliens and Nationality</TITLE></HEADER><TEXT><BODY><ECFRBRWS>
+        <AMDDATE>July 28, 2026</AMDDATE><DIV1 TYPE="TITLE"><DIV3 TYPE="CHAPTER"><HEAD>CHAPTER I—DEPARTMENT OF HOMELAND SECURITY</HEAD>
+          <DIV5 TYPE="PART" N="1"><HEAD>PART 1—DEFINITIONS</HEAD><AUTH><HED>Authority:</HED><PSPACE>8 U.S.C. 1101.</PSPACE></AUTH>
+            <DIV8 TYPE="SECTION" N="§ 1.1" NODE="8:1.0.1"><HEAD>§ 1.1 Applicability.</HEAD><P>This part applies to immigration proceedings.</P></DIV8>
+            <DIV8 TYPE="SECTION" N="§ 1.2" NODE="8:1.0.2"><HEAD>§ 1.2 Definitions.</HEAD><P><I>Act</I> means the Immigration and Nationality Act.</P></DIV8>
+          </DIV5>
+        </DIV3></DIV1>
+      </ECFRBRWS></BODY></TEXT></DLPSTEXTCLASS>`;
+
+    const frame = document.querySelector('#application');
+    const report = document.querySelector('#report');
+    const check = (condition, message) => { if (!condition) throw new Error(message); };
+    frame.addEventListener('load', async () => {
+      try {
+        const app = frame.contentWindow;
+        const page = frame.contentDocument;
+        page.querySelector('#xml-modal').hidden = false;
+        let reader = app.displayLegalDocumentText(usCode, { title: 'USC test', xml_byte_size: usCode.length });
+        check(reader.schema === 'uslm', 'USLM schema was not detected');
+        check(reader.groups.length === 1 && reader.units.length === 2, 'U.S. Code hierarchy was not built');
+        check(page.querySelector('#xml-tree').textContent.includes('ALIENS AND NATIONALITY'), 'U.S. Code overview was not rendered');
+        app.renderLegalUnit(0);
+        check(page.querySelector('#xml-tree').textContent.includes('qualified immigrants'), 'Statutory provision text was not rendered');
+        check(page.querySelector('.legal-note'), 'Statutory notes were not made collapsible');
+        app.renderLegalUnit(1);
+        page.querySelector('[data-legal-reference]').click();
+        check(page.querySelector('#xml-tree h1').textContent.includes('1153'), 'Internal statutory cross-reference did not navigate');
+        app.renderLegalUnit(0, 'public law');
+        check(page.querySelector('.legal-note').open && page.querySelector('.legal-note mark'), 'A matching editorial note was not expanded and highlighted');
+        await app.searchXmlDocument('qualified immigrants');
+        check(page.querySelectorAll('.legal-search-result').length === 1, 'Statute search did not return its provision');
+
+        reader = app.displayLegalDocumentText(ecfr, { title: 'eCFR test', xml_byte_size: ecfr.length });
+        check(reader.schema === 'ecfr', 'eCFR schema was not detected');
+        check(reader.groups.length === 1 && reader.units.length === 2, 'eCFR part/section hierarchy was not built');
+        app.renderLegalUnit(1);
+        check(page.querySelector('#xml-tree').textContent.includes('Immigration and Nationality Act'), 'Regulatory section text was not rendered');
+        check(page.querySelector('#xml-tree h1').textContent.includes('§ 1.2'), 'Regulatory citation heading was not rendered');
+
+        if (new URLSearchParams(location.search).has('uscode')) {
+          app.displayLegalDocumentText(usCode, { title: 'USC test', xml_byte_size: usCode.length });
+          app.renderLegalUnit(0);
+        }
+
+        report.className = 'pass';
+        report.textContent = 'PASS — U.S. Code and eCFR render as navigable legal documents.';
+        document.title = 'PASS legal reader';
+      } catch (error) {
+        report.className = 'fail';
+        report.textContent = `FAIL — ${error.message || error}`;
+        document.title = 'FAIL legal reader';
+      }
+    });
+  </script>
+</body>
+</html>

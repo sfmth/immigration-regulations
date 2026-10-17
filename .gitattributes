@@ -1,0 +1,8 @@
+/data/catalog.sqlite filter=lfs diff=lfs merge=lfs -text
+/data/extracted/uscode_current/*/usc42.xml filter=lfs diff=lfs merge=lfs -text
+/data/extracted/uscode_current/*/usc10.xml filter=lfs diff=lfs merge=lfs -text
+/data/extracted/uscode_current/*/usc26.xml filter=lfs diff=lfs merge=lfs -text
+/data/text/uscode_current/*-usc42.xml.txt filter=lfs diff=lfs merge=lfs -text
+/dist/*.zip filter=lfs diff=lfs merge=lfs -text
+/portable/*.pack filter=lfs diff=lfs merge=lfs -text
+/portable/*.sqlite filter=lfs diff=lfs merge=lfs -text

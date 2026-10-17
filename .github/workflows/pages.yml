@@ -1,0 +1,67 @@
+name: Publish legal corpus on GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Raw research files and old archives are deliberately outside this build.
+          lfs: false
+          sparse-checkout: |
+            assets
+            config
+            portable
+            reports
+            scripts
+            tests
+            vendor
+      - name: Fetch the two approved portable LFS assets
+        run: git lfs pull --include="portable/immigration-search.sqlite,portable/immigration-search-text.pack" --exclude=""
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify checksums
+        working-directory: portable
+        run: sha256sum -c search-assets.sha256
+      - name: Check Python behavior
+        run: |
+          python3 scripts/check_publication.py
+          python3 -m unittest discover -v -s tests
+      - name: Check hosted transport and corpus search
+        run: |
+          node tests/hosted_transport_test.js
+          node tests/portable_search_test.js
+      - name: Build the rights-filtered site
+        run: python3 scripts/build_pages.py
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+data/catalog.sqlite-shm
+data/catalog.sqlite-wal
+_site/
+# Raw downloaded research material is local; publish only the rights-filtered assets.
+data/
+.env
+.env.*
+!.env.example
+*.key
+*.p12
+*.pfx

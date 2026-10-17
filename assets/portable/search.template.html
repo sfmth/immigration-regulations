@@ -1,0 +1,1819 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="Search an independent snapshot of U.S. immigration statutes, regulations, agency manuals, and precedent. Includes source links and a legal document reader.">
+  <title>U.S. Immigration Legal Corpus</title>
+  <style>
+    :root {
+      --ink: #eef5f4;
+      --muted: #98aaa8;
+      --faint: #657775;
+      --page: #081110;
+      --panel: #0e1b1a;
+      --panel-raised: #132321;
+      --line: #243a37;
+      --line-bright: #34504c;
+      --mint: #53d6b2;
+      --mint-soft: #a5f3dc;
+      --gold: #f4bf62;
+      --blue: #7bbaf7;
+      --rose: #f38a9b;
+      --violet: #c49cf5;
+      --green: #76db8e;
+      --shadow: 0 24px 70px rgb(0 0 0 / 32%);
+      --radius: 16px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { min-height: 100%; }
+
+    body {
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% -8%, rgb(83 214 178 / 12%), transparent 32rem),
+        radial-gradient(circle at 95% 18%, rgb(123 186 247 / 8%), transparent 30rem),
+        var(--page);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.55;
+    }
+
+    a { color: inherit; }
+    button, input, select { font: inherit; }
+
+    .shell {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 42px 0 80px;
+    }
+
+    .masthead {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 26px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 14px; }
+
+    .brand-mark {
+      display: grid;
+      width: 48px;
+      height: 48px;
+      place-items: center;
+      border: 1px solid var(--line-bright);
+      border-radius: 14px;
+      color: var(--mint-soft);
+      background: linear-gradient(145deg, rgb(83 214 178 / 16%), rgb(83 214 178 / 3%));
+      box-shadow: inset 0 1px 0 rgb(255 255 255 / 8%);
+      font: 700 26px/1 Georgia, serif;
+    }
+
+    .eyebrow {
+      margin: 0 0 2px;
+      color: var(--mint);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: .15em;
+      text-transform: uppercase;
+    }
+
+    h1 { margin: 0; font-family: Georgia, "Times New Roman", serif; font-size: clamp(22px, 3vw, 30px); }
+
+    .corpus-stats {
+      color: var(--muted);
+      font-size: 13px;
+      text-align: right;
+    }
+
+    .search-panel {
+      position: relative;
+      overflow: hidden;
+      padding: clamp(22px, 4vw, 38px);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      background: linear-gradient(145deg, rgb(19 35 33 / 98%), rgb(11 24 22 / 98%));
+      box-shadow: var(--shadow);
+    }
+
+    .search-panel::after {
+      position: absolute;
+      inset: 0 0 auto;
+      height: 2px;
+      content: "";
+      background: linear-gradient(90deg, transparent, var(--mint), var(--blue), transparent);
+      opacity: .7;
+    }
+
+    .search-panel h2 {
+      margin: 0 0 6px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(25px, 4vw, 38px);
+      font-weight: 600;
+      letter-spacing: -.02em;
+    }
+
+    .lede { margin: 0 0 24px; color: var(--muted); max-width: 750px; }
+
+    .database-loader {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 14px 18px;
+      align-items: center;
+      min-height: 112px;
+      padding: 20px;
+      border: 1px dashed var(--line-bright);
+      border-radius: 14px;
+      background: rgb(5 15 14 / 55%);
+      transition: border-color .15s, background .15s;
+    }
+
+    .database-loader.dragging { border-color: var(--mint); background: rgb(83 214 178 / 8%); }
+
+    .database-button {
+      padding: 11px 16px;
+      border: 0;
+      border-radius: 10px;
+      color: #052019;
+      background: var(--mint);
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .database-copy strong { display: block; color: var(--ink); }
+    .database-copy span { color: var(--muted); font-size: 13px; }
+    .database-progress { grid-column: 1 / -1; color: var(--gold); font-size: 12px; }
+    .database-note { margin: 12px 2px 0; color: var(--faint); font-size: 12px; }
+    [hidden] { display: none !important; }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+    }
+
+    .query-wrap { position: relative; }
+
+    .search-icon {
+      position: absolute;
+      top: 50%;
+      left: 17px;
+      width: 19px;
+      height: 19px;
+      transform: translateY(-50%);
+      color: var(--faint);
+      pointer-events: none;
+    }
+
+    #query {
+      width: 100%;
+      height: 56px;
+      padding: 0 48px 0 50px;
+      border: 1px solid var(--line-bright);
+      border-radius: 13px;
+      outline: none;
+      color: var(--ink);
+      background: rgb(5 15 14 / 75%);
+      transition: border-color .15s, box-shadow .15s;
+    }
+
+    #query::placeholder { color: #6f817f; }
+    #query:focus { border-color: var(--mint); box-shadow: 0 0 0 3px rgb(83 214 178 / 14%); }
+
+    .key-hint {
+      position: absolute;
+      top: 50%;
+      right: 14px;
+      padding: 2px 7px;
+      transform: translateY(-50%);
+      border: 1px solid var(--line);
+      border-radius: 5px;
+      color: var(--faint);
+      background: var(--panel);
+      font-size: 11px;
+    }
+
+    .search-button {
+      min-width: 124px;
+      padding: 0 22px;
+      border: 0;
+      border-radius: 13px;
+      color: #052019;
+      background: var(--mint);
+      box-shadow: 0 8px 24px rgb(83 214 178 / 17%);
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .15s, background .15s;
+    }
+
+    .search-button:hover { background: #6fe2c1; transform: translateY(-1px); }
+    .search-button:disabled { cursor: wait; opacity: .65; transform: none; }
+
+    .filters {
+      display: grid;
+      grid-template-columns: minmax(230px, 1fr) 135px;
+      gap: 12px;
+      margin-top: 13px;
+    }
+
+    .field label {
+      display: block;
+      margin: 0 0 5px 2px;
+      color: var(--faint);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .07em;
+      text-transform: uppercase;
+    }
+
+    select {
+      width: 100%;
+      height: 42px;
+      padding: 0 34px 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      outline: none;
+      color: var(--muted);
+      background: var(--panel) linear-gradient(45deg, transparent 50%, var(--muted) 50%) calc(100% - 15px) 17px / 5px 5px no-repeat;
+      appearance: none;
+    }
+
+    select:focus { border-color: var(--mint); }
+
+    .examples { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 20px; }
+    .examples-label { margin-right: 2px; color: var(--faint); font-size: 12px; }
+
+    .example {
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: var(--muted);
+      background: transparent;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .example:hover { border-color: var(--mint); color: var(--mint-soft); }
+
+    .results-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+      min-height: 76px;
+      padding: 26px 2px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    #status { margin: 0; font-size: 15px; font-weight: 700; }
+    .syntax { color: var(--faint); font-size: 12px; text-align: right; }
+    .syntax code { color: var(--gold); }
+
+    #results { display: grid; gap: 12px; padding-top: 14px; }
+
+    .result {
+      position: relative;
+      padding: 22px 24px 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgb(14 27 26 / 84%);
+      transition: border-color .15s, transform .15s, background .15s;
+    }
+
+    .result:hover { border-color: var(--line-bright); background: var(--panel-raised); transform: translateY(-1px); }
+
+    .result-top { display: grid; grid-template-columns: 34px 1fr; gap: 12px; }
+
+    .rank {
+      display: grid;
+      width: 30px;
+      height: 30px;
+      place-items: center;
+      border-radius: 8px;
+      color: var(--gold);
+      background: rgb(244 191 98 / 10%);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .result h3 { margin: 1px 0 6px; font-family: Georgia, "Times New Roman", serif; font-size: 19px; line-height: 1.35; }
+
+    .result h3 a { text-decoration: none; }
+    .result h3 a:hover { color: var(--mint-soft); }
+
+    .meta { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; color: var(--muted); font-size: 12px; }
+
+    .source-id { color: var(--mint); }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      min-height: 23px;
+      padding: 2px 8px;
+      border: 1px solid currentColor;
+      border-radius: 999px;
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+      opacity: .9;
+    }
+
+    .binding_law, .current_regulatory_text { color: var(--green); }
+    .binding_agency_precedent { color: var(--violet); }
+    .judicial_opinion { color: var(--blue); }
+    .agency_policy { color: var(--gold); }
+    .cataloged { color: var(--muted); }
+
+    .rights-badge { color: var(--blue); }
+    .rights-badge.caution { color: var(--gold); }
+    .rights-badge.review { color: #ff8b8b; }
+
+    .snippet {
+      margin: 15px 0 0 46px;
+      padding-left: 14px;
+      border-left: 2px solid var(--line-bright);
+      color: #bdcac8;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 15px;
+      line-height: 1.65;
+    }
+
+    mark { padding: 1px 2px; border-radius: 3px; color: #fff4d6; background: rgb(244 191 98 / 26%); }
+
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 0 46px; }
+
+    .action {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      background: transparent;
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .action:hover { border-color: var(--mint); color: var(--mint-soft); }
+
+    .empty {
+      padding: 56px 20px;
+      border: 1px dashed var(--line);
+      border-radius: var(--radius);
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .empty strong { display: block; margin-bottom: 6px; color: var(--ink); font-family: Georgia, serif; font-size: 20px; }
+
+    .loader { display: grid; gap: 12px; }
+    .skeleton { height: 170px; border: 1px solid var(--line); border-radius: var(--radius); background: linear-gradient(90deg, var(--panel) 25%, var(--panel-raised) 45%, var(--panel) 65%); background-size: 300% 100%; animation: pulse 1.4s infinite; }
+    @keyframes pulse { to { background-position: -150% 0; } }
+
+    footer { margin-top: 34px; color: var(--faint); font-size: 12px; text-align: center; }
+
+    body.xml-open { overflow: hidden; }
+
+    .xml-modal {
+      position: fixed;
+      z-index: 1000;
+      inset: 0;
+      display: grid;
+      padding: 18px;
+      place-items: center;
+      background: rgb(2 8 7 / 82%);
+      backdrop-filter: blur(8px);
+    }
+
+    .xml-window {
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      width: min(1380px, 100%);
+      height: min(920px, 100%);
+      overflow: hidden;
+      border: 1px solid var(--line-bright);
+      border-radius: 18px;
+      background: #081311;
+      box-shadow: 0 30px 100px rgb(0 0 0 / 65%);
+    }
+
+    .xml-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      background: var(--panel-raised);
+    }
+
+    .xml-heading { min-width: 0; }
+    .xml-heading .eyebrow { margin-bottom: 3px; }
+    .xml-heading h2 { overflow: hidden; margin: 0; font-family: Georgia, serif; font-size: 20px; text-overflow: ellipsis; white-space: nowrap; }
+
+    .xml-close {
+      display: grid;
+      flex: 0 0 auto;
+      width: 38px;
+      height: 38px;
+      place-items: center;
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      color: var(--muted);
+      background: transparent;
+      font-size: 20px;
+      cursor: pointer;
+    }
+
+    .xml-close:hover { border-color: var(--rose); color: var(--rose); }
+
+    .xml-toolbar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1fr) auto auto auto auto;
+      gap: 8px;
+      padding: 11px 14px;
+      border-bottom: 1px solid var(--line);
+      background: #0b1816;
+    }
+
+    .xml-toolbar input {
+      min-width: 0;
+      height: 39px;
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      outline: none;
+      color: var(--ink);
+      background: var(--page);
+    }
+
+    .xml-toolbar input:focus { border-color: var(--mint); }
+
+    .xml-tool {
+      padding: 0 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--muted);
+      background: transparent;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .xml-tool:hover { border-color: var(--mint); color: var(--mint-soft); }
+    .xml-tool:disabled { opacity: .35; cursor: not-allowed; }
+
+    .legal-layout {
+      display: grid;
+      grid-template-columns: minmax(250px, 320px) minmax(0, 1fr);
+      min-height: 0;
+    }
+
+    .legal-nav {
+      overflow: auto;
+      padding: 14px 10px 24px;
+      border-right: 1px solid var(--line);
+      background: #0a1715;
+      overscroll-behavior: contain;
+    }
+
+    .legal-nav-caption {
+      margin: 4px 8px 10px;
+      color: var(--faint);
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+    }
+
+    .legal-nav-home, .legal-nav-button {
+      width: 100%;
+      border: 0;
+      border-radius: 7px;
+      color: var(--muted);
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .legal-nav-home {
+      margin-bottom: 8px;
+      padding: 10px 11px;
+      border: 1px solid var(--line);
+      color: var(--mint-soft);
+      font-weight: 800;
+    }
+
+    .legal-nav-home:hover, .legal-nav-button:hover, .legal-nav-button.active {
+      color: var(--ink);
+      background: rgb(83 214 178 / 10%);
+    }
+
+    .legal-nav-group { border-bottom: 1px solid rgb(36 75 68 / 55%); }
+    .legal-nav-group > summary { padding: 11px 8px; color: #d4dfdc; font: 700 12px/1.4 Inter, sans-serif; cursor: pointer; }
+    .legal-nav-group > summary:hover { color: var(--mint-soft); }
+    .legal-nav-items { padding: 0 0 9px 10px; }
+    .legal-nav-button { padding: 7px 9px; font: 12px/1.4 Inter, sans-serif; }
+    .legal-nav-overview { color: var(--gold); font-weight: 800; }
+
+    .xml-content {
+      overflow: auto;
+      padding: 22px;
+      background: #07110f;
+      overscroll-behavior: contain;
+    }
+
+    .xml-status {
+      width: min(900px, 100%);
+      margin: 0 auto 12px;
+      color: var(--muted);
+      font: 12px/1.45 Inter, ui-sans-serif, system-ui, sans-serif;
+    }
+
+    .legal-document {
+      width: min(900px, 100%);
+      min-height: 100%;
+      margin: 0 auto;
+      padding: clamp(26px, 5vw, 58px);
+      border: 1px solid #d8cfbd;
+      border-radius: 5px;
+      color: #1f2927;
+      background: #f7f3e9;
+      box-shadow: 0 18px 60px rgb(0 0 0 / 28%);
+      font: 17px/1.72 Georgia, "Times New Roman", serif;
+    }
+
+    .legal-document p { margin: .6em 0; }
+    .legal-document mark { color: #241800; background: #ffd978; }
+    .legal-kicker { margin: 0 0 9px; color: #3c7166; font: 800 11px/1.4 Inter, sans-serif; letter-spacing: .11em; text-transform: uppercase; }
+    .legal-document h1 { margin: 0; color: #133e37; font: 700 clamp(27px, 4vw, 42px)/1.13 Georgia, serif; }
+    .legal-document h2 { margin: 34px 0 14px; color: #185348; font: 700 25px/1.24 Georgia, serif; }
+    .legal-document h3 { margin: 25px 0 9px; color: #225e53; font: 700 20px/1.3 Georgia, serif; }
+    .legal-document h4 { margin: 20px 0 7px; color: #2e6259; font: 700 17px/1.35 Georgia, serif; }
+    .legal-subtitle { margin: 12px 0 0; color: #58645f; font-size: 16px; }
+    .legal-breadcrumb { margin: 0 0 15px; color: #68736f; font: 700 11px/1.5 Inter, sans-serif; letter-spacing: .04em; text-transform: uppercase; }
+    .legal-rule { margin: 24px 0; border: 0; border-top: 1px solid #d8cfbd; }
+
+    .legal-badges { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 18px; }
+    .legal-badge { padding: 5px 8px; border: 1px solid #b9ad98; border-radius: 999px; color: #56635e; font: 800 10px Inter, sans-serif; letter-spacing: .04em; text-transform: uppercase; }
+    .legal-badge.alert { border-color: #b86f62; color: #8f372b; }
+
+    .legal-card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 10px; margin-top: 24px; }
+    .legal-card {
+      padding: 15px;
+      border: 1px solid #d5cbb8;
+      border-radius: 9px;
+      color: #1d554b;
+      background: #fffaf0;
+      text-align: left;
+      font: 700 14px/1.45 Inter, sans-serif;
+      cursor: pointer;
+    }
+    .legal-card:hover { border-color: #4b8d7f; background: #f0f7f3; }
+    .legal-card small { display: block; margin-top: 5px; color: #75807b; font-weight: 600; }
+
+    .legal-provision { margin: .72em 0; }
+    .legal-provision .legal-provision { margin-left: clamp(16px, 3vw, 34px); }
+    .legal-num { display: inline-block; min-width: 2.5em; padding-right: .35em; color: #174f45; font-weight: 700; }
+    .legal-heading-inline { color: #173f38; font-weight: 700; }
+    .legal-reference { padding: 0; border: 0; border-bottom: 1px dotted #246d99; color: #135f91; background: transparent; font: inherit; text-align: inherit; cursor: pointer; }
+    .legal-reference:hover { color: #8b3d25; border-bottom-style: solid; }
+    .legal-document blockquote { margin: 17px 0 17px 22px; padding: 8px 18px; border-left: 3px solid #7fa99d; color: #3d4b47; background: #f0eee5; }
+
+    .legal-note { margin: 15px 0; border: 1px solid #d9cdb7; border-radius: 8px; background: #fff9eb; }
+    .legal-note > summary { padding: 10px 13px; color: #755327; font: 800 12px/1.4 Inter, sans-serif; cursor: pointer; }
+    .legal-note-body { padding: 1px 16px 14px; border-top: 1px solid #e5dac6; }
+    .legal-meta-box { margin: 12px 0; padding: 10px 14px; border-left: 3px solid #3f8275; color: #45524e; background: #eef3ef; font-size: 15px; }
+
+    .legal-document table { width: 100%; margin: 18px 0; border-collapse: collapse; font-size: 14px; }
+    .legal-document th, .legal-document td { padding: 8px 9px; border: 1px solid #cfc4b1; vertical-align: top; text-align: left; }
+    .legal-document th { color: #244b43; background: #e8eee9; }
+
+    .legal-search-results { display: grid; gap: 10px; margin-top: 22px; }
+    .legal-search-result { display: block; width: 100%; padding: 15px 17px; border: 1px solid #d5cbb8; border-radius: 9px; color: #1f2927; background: #fffaf0; text-align: left; cursor: pointer; }
+    .legal-search-result:hover { border-color: #4b8d7f; }
+    .legal-search-result strong { display: block; margin-bottom: 5px; color: #174f45; font: 800 14px/1.4 Inter, sans-serif; }
+    .legal-search-result span { color: #5a6560; font: 14px/1.5 Georgia, serif; }
+    .legal-reader-error { padding: 28px; border: 1px solid #d2a79d; border-radius: 8px; color: #7d2f25; background: #fff1ed; }
+
+    .legal-page-controls { display: flex; justify-content: space-between; gap: 12px; margin-top: 34px; padding-top: 18px; border-top: 1px solid #d8cfbd; }
+    .legal-page-controls button { max-width: 48%; padding: 9px 11px; border: 1px solid #c8bca7; border-radius: 7px; color: #205d51; background: #fffaf0; font: 700 12px/1.4 Inter, sans-serif; cursor: pointer; }
+    .legal-page-controls button:hover { border-color: #4b8d7f; }
+
+    @media (max-width: 700px) {
+      .shell { width: min(100% - 20px, 1120px); padding-top: 24px; }
+      .masthead { align-items: flex-start; }
+      .corpus-stats { display: none; }
+      .search-row { grid-template-columns: 1fr; }
+      .search-button { height: 48px; }
+      .filters { grid-template-columns: 1fr; }
+      .database-loader { grid-template-columns: 1fr; }
+      .database-progress { grid-column: 1; }
+      .results-head { align-items: flex-start; flex-direction: column; gap: 5px; }
+      .syntax { text-align: left; }
+      .result { padding: 18px 16px; }
+      .snippet, .actions { margin-left: 0; }
+      .xml-modal { padding: 0; }
+      .xml-window { width: 100%; height: 100%; border: 0; border-radius: 0; }
+      .xml-toolbar { grid-template-columns: minmax(0, 1fr) auto auto; }
+      .xml-tool[data-legal-previous], .xml-tool[data-legal-next] { display: none; }
+      .legal-layout { grid-template-columns: 1fr; grid-template-rows: minmax(100px, 24vh) minmax(0, 1fr); }
+      .legal-nav { border-right: 0; border-bottom: 1px solid var(--line); }
+      .xml-content { padding: 10px 6px; }
+      .legal-document { padding: 24px 18px; border-radius: 0; font-size: 16px; }
+      .legal-card-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">§</div>
+        <div>
+          <p class="eyebrow">Local research database</p>
+          <h1>U.S. Immigration Legal Corpus</h1>
+        </div>
+      </div>
+      <div class="corpus-stats" id="corpus-stats">Loading corpus…</div>
+    </header>
+
+    <section class="search-panel" aria-labelledby="search-title">
+      <h2 id="search-title">Search the authorities</h2>
+      <p class="lede">Search statutes, regulations, officer manuals, agency precedent, visa guidance, and denaturalization procedure. The public package contains approved extracted text and legal XML—not mirrored agency webpages, graphics, seals, or original binary files.</p>
+
+      <div class="database-loader" id="database-loader">
+        <input id="database-file" type="file" accept=".sqlite,.sqlite3,.db,.pack,application/vnd.sqlite3" multiple hidden>
+        <button class="database-button" id="database-button" type="button">Choose search files</button>
+        <div class="database-copy">
+          <strong>Open the .sqlite and .pack files together</strong>
+          <span>Select both files from the portable folder, or drag both onto this box.</span>
+        </div>
+        <div class="database-progress" id="database-progress">No server or internet connection is required.</div>
+      </div>
+
+      <div class="database-loader" id="online-loader" hidden>
+        <button class="database-button" id="online-button" type="button">Load online search</button>
+        <div class="database-copy">
+          <strong id="online-summary">Search this published snapshot</strong>
+          <span id="online-description">The index loads once per visit. Passages download as needed; searches run on your device.</span>
+        </div>
+        <div class="database-progress" id="online-progress" role="status" aria-live="polite"></div>
+      </div>
+
+      <form id="search-form" hidden>
+        <div class="search-row">
+          <div class="query-wrap">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m20 20-4-4"></path></svg>
+            <input id="query" name="q" type="search" autocomplete="off" spellcheck="false" placeholder='Try “national interest waiver” or denaturalization' aria-label="Search query">
+            <span class="key-hint" aria-hidden="true">/</span>
+          </div>
+          <button class="search-button" id="search-button" type="submit">Search</button>
+        </div>
+
+        <div class="filters">
+          <div class="field">
+            <label for="source">Collection</label>
+            <select id="source" name="source"><option value="">All official collections</option></select>
+          </div>
+          <div class="field">
+            <label for="limit">Results</label>
+            <select id="limit" name="limit">
+              <option value="10">10</option>
+              <option value="20" selected>20</option>
+              <option value="50">50</option>
+              <option value="100">100</option>
+            </select>
+          </div>
+        </div>
+      </form>
+
+      <div class="examples" id="examples" aria-label="Example searches" hidden>
+        <span class="examples-label">Examples</span>
+        <button class="example" type="button" data-query='denaturalization OR "revocation of naturalization"'>Denaturalization</button>
+        <button class="example" type="button" data-query='"student visa" OR SEVIS OR "F-1"'>Student visas</button>
+        <button class="example" type="button" data-query='"national interest waiver" OR Dhanasar'>NIW</button>
+        <button class="example" type="button" data-query='marriage AND (fraud OR spouse)'>Marriage</button>
+        <button class="example" type="button" data-query='"border search" AND electronic'>Border searches</button>
+      </div>
+    </section>
+
+    <div class="results-head">
+      <p id="status" role="status" aria-live="polite">Select the packaged search database to begin.</p>
+      <div class="syntax">Supports phrases and <code>AND</code>, <code>OR</code>, <code>NOT</code></div>
+    </div>
+    <section id="results" aria-label="Search results">
+      <div class="empty"><strong>Runs entirely on this device.</strong>The database stays in your browser memory and is never uploaded.</div>
+    </section>
+
+    <footer>Independent, unofficial research aid. Snapshot collected July 31–August 1, 2026; this is not a live statement of current law or legal advice. Verify currency, precedential status, jurisdiction, and subsequent treatment. <a href="https://github.com/sfmth/immigration-regulations/blob/main/RIGHTS_AND_DISTRIBUTION.md">Rights and distribution</a> · <a href="https://github.com/sfmth/immigration-regulations/blob/main/THIRD_PARTY_NOTICES.md">Third-party notices</a> · <a href="https://github.com/sfmth/immigration-regulations">Source and offline files</a></footer>
+  </main>
+
+  <div class="xml-modal" id="xml-modal" hidden>
+    <section class="xml-window" role="dialog" aria-modal="true" aria-labelledby="xml-viewer-title">
+      <header class="xml-header">
+        <div class="xml-heading">
+          <p class="eyebrow">Legal document reader</p>
+          <h2 id="xml-viewer-title">Legal document</h2>
+        </div>
+        <button class="xml-close" id="xml-close" type="button" aria-label="Close legal document reader">×</button>
+      </header>
+      <form class="xml-toolbar" id="xml-search-form">
+        <input id="xml-search" type="search" autocomplete="off" spellcheck="false" placeholder="Search within this legal document…" aria-label="Search within this legal document">
+        <button class="xml-tool" type="submit">Find</button>
+        <button class="xml-tool" type="button" data-legal-home>Contents</button>
+        <button class="xml-tool" type="button" data-legal-previous>Previous</button>
+        <button class="xml-tool" type="button" data-legal-next>Next</button>
+      </form>
+      <div class="legal-layout">
+        <nav class="legal-nav" id="legal-nav" aria-label="Document contents"></nav>
+        <div class="xml-content" id="xml-content">
+          <p class="xml-status" id="xml-status">Loading legal document…</p>
+          <article class="legal-document" id="xml-tree"></article>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>/*__SQLJS_SOURCE__*/</script>
+  <script>/*__HOSTED_SOURCE__*/</script>
+  <script>
+    const HOSTED_MANIFEST = null;
+    const SQL_WASM_BASE64 = '__SQLJS_WASM_BASE64__';
+    const form = document.querySelector('#search-form');
+    const queryInput = document.querySelector('#query');
+    const sourceSelect = document.querySelector('#source');
+    const limitSelect = document.querySelector('#limit');
+    const searchButton = document.querySelector('#search-button');
+    const resultsNode = document.querySelector('#results');
+    const statusNode = document.querySelector('#status');
+    const statsNode = document.querySelector('#corpus-stats');
+    const databaseLoader = document.querySelector('#database-loader');
+    const databaseButton = document.querySelector('#database-button');
+    const databaseFile = document.querySelector('#database-file');
+    const databaseProgress = document.querySelector('#database-progress');
+    const examples = document.querySelector('#examples');
+    const xmlModal = document.querySelector('#xml-modal');
+    const xmlClose = document.querySelector('#xml-close');
+    const xmlTitle = document.querySelector('#xml-viewer-title');
+    const xmlSearchForm = document.querySelector('#xml-search-form');
+    const xmlSearchInput = document.querySelector('#xml-search');
+    const xmlContent = document.querySelector('#xml-content');
+    const xmlStatus = document.querySelector('#xml-status');
+    const xmlTree = document.querySelector('#xml-tree');
+    const legalNav = document.querySelector('#legal-nav');
+    const legalHome = document.querySelector('[data-legal-home]');
+    const legalPrevious = document.querySelector('[data-legal-previous]');
+    const legalNext = document.querySelector('[data-legal-next]');
+    let database = null;
+    let textPack = null;
+    let totalDocuments = 1;
+    let visibleResults = new Map();
+    let activeXmlDocument = null;
+    let activeXmlSearchGeneration = 0;
+    let legalReader = null;
+    let activeLegalUnitIndex = -1;
+    let activeLegalQuery = '';
+
+    const wasmBytes = Uint8Array.from(atob(SQL_WASM_BASE64), character => character.charCodeAt(0));
+    const wasmURL = URL.createObjectURL(new Blob([wasmBytes], { type: 'application/wasm' }));
+    const sqlReady = initSqlJs({ locateFile: () => wasmURL });
+
+    const escapeHTML = (value = '') => String(value).replace(/[&<>'"]/g, character => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    })[character]);
+
+    const label = (value = 'unknown') => value.replaceAll('_', ' ').replace(/\b\w/g, letter => letter.toUpperCase());
+
+    function safeOfficialURL(value) {
+      try {
+        const parsed = new URL(value);
+        return ['http:', 'https:'].includes(parsed.protocol) ? parsed.href : null;
+      } catch (_) { return null; }
+    }
+
+    function queryTerms(value) {
+      const operators = new Set(['and', 'or', 'not', 'near']);
+      const terms = [];
+      for (const match of value.matchAll(/"([^"]+)"|[\p{L}\p{N}][\p{L}\p{N}.'§-]*/gu)) {
+        const term = (match[1] || match[0]).trim();
+        if (term && !operators.has(term.toLowerCase())) terms.push(term);
+      }
+      return [...new Set(terms)].sort((a, b) => b.length - a.length);
+    }
+
+    function highlightedExcerpt(value, query) {
+      if (!value) return '';
+      const terms = queryTerms(query);
+      const lower = value.toLocaleLowerCase();
+      let position = -1;
+      for (const term of terms) {
+        const found = lower.indexOf(term.toLocaleLowerCase());
+        if (found >= 0 && (position < 0 || found < position)) position = found;
+      }
+      const start = Math.max(0, (position < 0 ? 0 : position) - 150);
+      const end = Math.min(value.length, start + 480);
+      let excerpt = value.slice(start, end).replace(/\s+/g, ' ').trim();
+      const pattern = terms.length
+        ? new RegExp(terms.map(term => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|'), 'giu')
+        : null;
+      if (pattern) excerpt = excerpt.replace(pattern, match => `\u0001${match}\u0002`);
+      excerpt = escapeHTML(excerpt).replaceAll('\u0001', '<mark>').replaceAll('\u0002', '</mark>');
+      return `${start ? '… ' : ''}${excerpt}${end < value.length ? ' …' : ''}`;
+    }
+
+    async function decompressText(offset, length) {
+      if (!textPack || length <= 0) return '';
+      if (!('DecompressionStream' in window)) return '';
+      const portion = await textPack.slice(offset, offset + length);
+      const stream = portion.stream()
+        .pipeThrough(new DecompressionStream('gzip'));
+      return new Response(stream).text();
+    }
+
+    function relativeDocumentURL(path) {
+      if (!path || path.includes('..')) return null;
+      return '../' + path.split('/').map(encodeURIComponent).join('/');
+    }
+
+    function resultCard(result, index) {
+      const officialURL = safeOfficialURL(result.url);
+      const title = escapeHTML(result.title || 'Untitled document');
+      const titleMarkup = officialURL
+        ? `<a href="${escapeHTML(officialURL)}" target="_blank" rel="noopener noreferrer">${title}</a>`
+        : title;
+      const authorityClass = ['binding_law', 'current_regulatory_text', 'binding_agency_precedent', 'judicial_opinion', 'agency_policy', 'cataloged'].includes(result.authority_tier)
+        ? result.authority_tier : '';
+      const localURL = relativeDocumentURL(result.original_path);
+      const isXML = Number(result.xml_pack_length) > 0;
+      const localAction = localURL
+        ? `<a class="action" href="${escapeHTML(localURL)}" target="_blank">▣ Open ${isXML ? 'raw XML' : 'local file'}</a>` : '';
+      const webAction = officialURL
+        ? `<a class="action" href="${escapeHTML(officialURL)}" target="_blank" rel="noopener noreferrer">↗ Official source</a>` : '';
+      const xmlAction = isXML
+        ? `<button class="action" type="button" data-xml-document="${Number(result.id)}">§ Read legal document</button>` : '';
+      const rightsClass = result.rights_status === 'review_required'
+        ? 'review' : result.rights_status === 'agency_reuse_policy_caution' ? 'caution' : '';
+      const rightsBadge = `<span class="badge rights-badge ${rightsClass}" title="${escapeHTML(result.rights_note || result.rights_basis || '')}">${escapeHTML(label(result.rights_status))}</span>`;
+
+      return `<article class="result">
+        <div class="result-top">
+          <div class="rank">${index + 1}</div>
+          <div>
+            <h3>${titleMarkup}</h3>
+            <div class="meta">
+              <span>${escapeHTML(result.agency || 'Unknown agency')}</span><span>·</span>
+              <span class="source-id">${escapeHTML(result.source_id)}</span>
+              <span class="badge ${authorityClass}">${escapeHTML(label(result.authority_tier))}</span>
+              ${rightsBadge}
+              <span>${escapeHTML(label(result.category))}</span>
+            </div>
+          </div>
+        </div>
+        ${result.snippet ? `<p class="snippet">${result.snippet}</p>` : ''}
+        <div class="actions">${webAction}${xmlAction}${localAction}</div>
+      </article>`;
+    }
+
+    function formatBytes(value) {
+      const bytes = Number(value) || 0;
+      if (bytes < 1024) return `${bytes.toLocaleString()} bytes`;
+      if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`;
+      return `${(bytes / 1048576).toFixed(1)} MB`;
+    }
+
+    function cleanLegalText(value = '') {
+      return String(value).replace(/[\s ]+/gu, ' ').trim();
+    }
+
+    function legalName(element) {
+      return (element?.localName || element?.nodeName || '').toLocaleLowerCase();
+    }
+
+    function directLegalChild(element, ...names) {
+      const wanted = new Set(names.map(name => name.toLocaleLowerCase()));
+      return [...(element?.children || [])].find(child => wanted.has(legalName(child))) || null;
+    }
+
+    function firstLegalDescendant(element, ...names) {
+      const wanted = new Set(names.map(name => name.toLocaleLowerCase()));
+      if (!element) return null;
+      const all = element.getElementsByTagName('*');
+      for (let index = 0; index < all.length; index++) {
+        if (wanted.has(legalName(all[index]))) return all[index];
+      }
+      return null;
+    }
+
+    function legalElementLabel(element, schema, fallback = 'Untitled provision') {
+      const heading = cleanLegalText(directLegalChild(element, 'heading', 'head')?.textContent);
+      const number = cleanLegalText(directLegalChild(element, 'num')?.textContent || element?.getAttribute('N'));
+      if (schema === 'ecfr' && heading) return heading;
+      return cleanLegalText(`${number} ${heading}`) || heading || number || fallback;
+    }
+
+    function buildLegalReader(documentNode, result) {
+      const root = documentNode.documentElement;
+      const rootName = legalName(root);
+      const schema = rootName === 'uscdoc' ? 'uslm'
+        : (rootName === 'dlpstextclass' || firstLegalDescendant(root, 'ecfrbrws')) ? 'ecfr' : 'generic';
+      const groups = [];
+      const units = [];
+      let documentTitle = result.title || 'Legal document';
+      const metadata = [];
+
+      if (schema === 'uslm') {
+        const main = directLegalChild(root, 'main');
+        const titleElement = directLegalChild(main, 'title');
+        documentTitle = legalElementLabel(titleElement, schema, documentTitle);
+        const meta = directLegalChild(root, 'meta');
+        const publication = firstLegalDescendant(meta, 'docpublicationname');
+        const created = firstLegalDescendant(meta, 'created');
+        const positiveLaw = [...(meta?.children || [])].find(child =>
+          legalName(child) === 'property' && child.getAttribute('role') === 'is-positive-law');
+        if (publication) metadata.push(cleanLegalText(publication.textContent));
+        if (created) metadata.push(`Source created ${cleanLegalText(created.textContent).slice(0, 10)}`);
+        if (positiveLaw) metadata.push(cleanLegalText(positiveLaw.textContent) === 'yes' ? 'Positive-law title' : 'Non-positive-law title');
+      } else if (schema === 'ecfr') {
+        const title = firstLegalDescendant(root, 'title');
+        const amended = firstLegalDescendant(root, 'amddate');
+        documentTitle = cleanLegalText(title?.textContent) || documentTitle;
+        if (amended) metadata.push(`Current through ${cleanLegalText(amended.textContent)}`);
+        metadata.push('Electronic Code of Federal Regulations');
+      } else {
+        metadata.push('Readable XML document view');
+      }
+
+      const all = root.getElementsByTagName('*');
+      const groupElements = [];
+      for (let index = 0; index < all.length; index++) {
+        const element = all[index];
+        const name = legalName(element);
+        if (schema === 'uslm' && name === 'chapter') groupElements.push(element);
+        if (schema === 'uslm' && name === 'section') units.push(element);
+        if (schema === 'ecfr' && name === 'div5' && (element.getAttribute('TYPE') || '').toLocaleUpperCase() === 'PART') groupElements.push(element);
+        if (schema === 'ecfr' && name === 'div8' && (element.getAttribute('TYPE') || '').toLocaleUpperCase() === 'SECTION') units.push(element);
+      }
+
+      const groupElementMap = new Map();
+      for (const element of groupElements) {
+        const parentLabels = [];
+        if (schema === 'ecfr') {
+          let parent = element.parentElement;
+          while (parent) {
+            if (['div3', 'div4'].includes(legalName(parent))) {
+              const parentLabel = legalElementLabel(parent, schema, '');
+              if (parentLabel) parentLabels.unshift(parentLabel);
+            }
+            parent = parent.parentElement;
+          }
+        }
+        const group = {
+          element,
+          label: legalElementLabel(element, schema, schema === 'uslm' ? 'Chapter' : 'Part'),
+          parentLabel: parentLabels.join(' › '),
+          units: [],
+        };
+        groups.push(group);
+        groupElementMap.set(element, group);
+      }
+
+      const unitGroups = new Map();
+      const unitIndexes = new Map();
+      const unitIdentifiers = [];
+      for (let index = 0; index < units.length; index++) {
+        const unit = units[index];
+        unitIndexes.set(unit, index);
+        let ancestor = unit.parentElement;
+        while (ancestor && !groupElementMap.has(ancestor)) ancestor = ancestor.parentElement;
+        const group = groupElementMap.get(ancestor) || null;
+        if (group) group.units.push(unit);
+        unitGroups.set(unit, group);
+        const identifier = unit.getAttribute('identifier') || unit.getAttribute('NODE') || unit.getAttribute('id') || '';
+        if (identifier) unitIdentifiers.push([identifier, index]);
+      }
+
+      if (!units.length) {
+        units.push(root);
+        unitIndexes.set(root, 0);
+        unitGroups.set(root, null);
+      }
+
+      return {
+        document: documentNode,
+        result,
+        schema,
+        schemaLabel: schema === 'uslm' ? 'U.S. Code' : schema === 'ecfr' ? 'eCFR' : 'XML document',
+        documentTitle,
+        metadata,
+        groups,
+        units,
+        unitGroups,
+        unitIndexes,
+        unitIdentifiers,
+      };
+    }
+
+    function createLegalButton(text, className, data = {}) {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = className;
+      button.textContent = text;
+      for (const [key, value] of Object.entries(data)) button.dataset[key] = value;
+      return button;
+    }
+
+    function renderLegalNavigation() {
+      legalNav.replaceChildren();
+      if (!legalReader) return;
+      const caption = document.createElement('p');
+      caption.className = 'legal-nav-caption';
+      caption.textContent = `${legalReader.schemaLabel} contents`;
+      const home = createLegalButton('⌂ Document overview', 'legal-nav-home', { legalHome: '1' });
+      legalNav.append(caption, home);
+      if (!legalReader.groups.length) {
+        legalNav.append(createLegalButton(legalReader.documentTitle, 'legal-nav-button', { legalUnit: '0' }));
+        return;
+      }
+      legalReader.groups.forEach((group, groupIndex) => {
+        const details = document.createElement('details');
+        details.className = 'legal-nav-group';
+        const summary = document.createElement('summary');
+        summary.textContent = group.label;
+        details.append(summary);
+        let populated = false;
+        details.addEventListener('toggle', () => {
+          if (!details.open || populated) return;
+          populated = true;
+          const items = document.createElement('div');
+          items.className = 'legal-nav-items';
+          items.append(createLegalButton(
+            `${legalReader.schema === 'ecfr' ? 'Part' : 'Chapter'} overview`,
+            'legal-nav-button legal-nav-overview', { legalGroup: String(groupIndex) },
+          ));
+          for (const unit of group.units) {
+            items.append(createLegalButton(
+              legalElementLabel(unit, legalReader.schema, 'Provision'),
+              'legal-nav-button', { legalUnit: String(legalReader.unitIndexes.get(unit)) },
+            ));
+          }
+          details.append(items);
+        });
+        legalNav.append(details);
+      });
+    }
+
+    function appendHighlightedLegalText(parent, value) {
+      const normalized = String(value).replace(/[\s ]+/gu, ' ');
+      const needle = activeLegalQuery.toLocaleLowerCase();
+      if (!needle || !normalized.toLocaleLowerCase().includes(needle)) {
+        parent.append(document.createTextNode(normalized));
+        return;
+      }
+      const lower = normalized.toLocaleLowerCase();
+      let cursor = 0;
+      let position = lower.indexOf(needle);
+      while (position >= 0) {
+        if (position > cursor) parent.append(document.createTextNode(normalized.slice(cursor, position)));
+        const mark = document.createElement('mark');
+        mark.textContent = normalized.slice(position, position + activeLegalQuery.length);
+        parent.append(mark);
+        cursor = position + activeLegalQuery.length;
+        position = lower.indexOf(needle, cursor);
+      }
+      if (cursor < normalized.length) parent.append(document.createTextNode(normalized.slice(cursor)));
+    }
+
+    function legalNoteTitle(element) {
+      const heading = cleanLegalText(directLegalChild(element, 'heading', 'head', 'hed')?.textContent);
+      const topic = element.getAttribute('topic') || element.getAttribute('type') || legalName(element);
+      return heading || label(topic.replace(/([a-z])([A-Z])/g, '$1 $2'));
+    }
+
+    function renderLegalNode(node, depth = 0, options = {}) {
+      if (node.nodeType === Node.TEXT_NODE || node.nodeType === Node.CDATA_SECTION_NODE) {
+        if (!node.nodeValue || !node.nodeValue.trim()) return null;
+        const fragment = document.createDocumentFragment();
+        appendHighlightedLegalText(fragment, node.nodeValue);
+        return fragment;
+      }
+      if (node.nodeType !== Node.ELEMENT_NODE) return null;
+      const name = legalName(node);
+      if (options.skipHeader && node.parentElement === options.root && ['num', 'heading', 'head'].includes(name)) return null;
+      if (['toc', 'layout', 'cfrtoc', 'header', 'meta', 'filedesc', 'profiledesc'].includes(name)) return null;
+
+      const identifier = node.getAttribute('identifier') || node.getAttribute('NODE') || node.getAttribute('id');
+      const appendChildren = (parent, childOptions = {}) => {
+        for (const child of node.childNodes) {
+          const rendered = renderLegalNode(child, depth + 1, childOptions);
+          if (rendered) parent.append(rendered);
+        }
+      };
+      const decorate = element => {
+        if (identifier) element.dataset.legalAnchor = identifier;
+        return element;
+      };
+
+      if (['notes', 'note', 'ednote', 'effdnot', 'ftnt'].includes(name)) {
+        const details = decorate(document.createElement('details'));
+        details.className = 'legal-note';
+        const summary = document.createElement('summary');
+        summary.textContent = legalNoteTitle(node);
+        details.append(summary);
+        let rendered = false;
+        const renderBody = () => {
+          if (rendered) return;
+          rendered = true;
+          const body = document.createElement('div');
+          body.className = 'legal-note-body';
+          appendChildren(body, { skipHeader: true, root: node });
+          details.append(body);
+        };
+        details.addEventListener('toggle', () => { if (details.open) renderBody(); });
+        if (activeLegalQuery && cleanLegalText(node.textContent).toLocaleLowerCase().includes(activeLegalQuery.toLocaleLowerCase())) {
+          details.open = true;
+          renderBody();
+        }
+        return details;
+      }
+
+      if (['auth', 'source', 'secauth', 'parauth', 'sourcecredit'].includes(name)) {
+        const box = decorate(document.createElement('div'));
+        box.className = 'legal-meta-box';
+        appendChildren(box);
+        return box;
+      }
+
+      if (['subsection', 'paragraph', 'subparagraph', 'clause', 'subclause', 'item', 'subitem', 'subsubitem', 'level'].includes(name)) {
+        const provision = decorate(document.createElement('div'));
+        provision.className = 'legal-provision';
+        const number = directLegalChild(node, 'num');
+        const heading = directLegalChild(node, 'heading');
+        if (number) {
+          const span = document.createElement('span');
+          span.className = 'legal-num';
+          appendHighlightedLegalText(span, cleanLegalText(number.textContent));
+          provision.append(span);
+        }
+        if (heading) {
+          const span = document.createElement('span');
+          span.className = 'legal-heading-inline';
+          appendHighlightedLegalText(span, cleanLegalText(heading.textContent));
+          provision.append(span, document.createTextNode(' '));
+        }
+        for (const child of node.childNodes) {
+          if (child === number || child === heading) continue;
+          const rendered = renderLegalNode(child, depth + 1);
+          if (rendered) provision.append(rendered);
+        }
+        return provision;
+      }
+
+      if (['p', 'fp', 'fp-1', 'fp-dash', 'pspace'].includes(name)) {
+        const paragraph = decorate(document.createElement('p'));
+        appendChildren(paragraph);
+        return paragraph;
+      }
+      if (['heading', 'head', 'hd1', 'hd2', 'hd3'].includes(name)) {
+        const heading = decorate(document.createElement(name === 'hd3' ? 'h4' : 'h3'));
+        appendChildren(heading);
+        return heading;
+      }
+      if (['b', 'strong', 'e'].includes(name)) {
+        const strong = decorate(document.createElement('strong'));
+        appendChildren(strong);
+        return strong;
+      }
+      if (['i', 'em', 'emphasis'].includes(name)) {
+        const emphasis = decorate(document.createElement('em'));
+        appendChildren(emphasis);
+        return emphasis;
+      }
+      if (['sup', 'su', 'ftref'].includes(name)) {
+        const superscript = decorate(document.createElement('sup'));
+        appendChildren(superscript);
+        return superscript;
+      }
+      if (name === 'sub') {
+        const subscript = decorate(document.createElement('sub'));
+        appendChildren(subscript);
+        return subscript;
+      }
+      if (name === 'br') return document.createElement('br');
+      if (['quotedcontent', 'extract'].includes(name)) {
+        const quote = decorate(document.createElement('blockquote'));
+        appendChildren(quote);
+        return quote;
+      }
+      if (name === 'table') {
+        const table = decorate(document.createElement('table'));
+        appendChildren(table);
+        return table;
+      }
+      if (['thead', 'tbody', 'tr', 'td', 'th'].includes(name)) {
+        const cell = decorate(document.createElement(name));
+        appendChildren(cell);
+        return cell;
+      }
+      if (name === 'colgroup') {
+        const group = decorate(document.createElement('colgroup'));
+        appendChildren(group);
+        return group;
+      }
+      if (name === 'col') return decorate(document.createElement('col'));
+      if (['ref', 'xref'].includes(name)) {
+        const href = node.getAttribute('href') || node.getAttribute('REFID') || '';
+        const reference = decorate(document.createElement(href ? 'button' : 'span'));
+        reference.className = 'legal-reference';
+        if (href) {
+          reference.type = 'button';
+          reference.dataset.legalReference = href;
+        }
+        appendChildren(reference);
+        return reference;
+      }
+
+      const blockChildren = new Set(['p', 'fp', 'fp-1', 'fp-dash', 'subsection', 'paragraph', 'subparagraph', 'clause', 'table', 'note', 'notes']);
+      const isBlock = [...node.children].some(child => blockChildren.has(legalName(child))) ||
+        ['content', 'chapeau', 'continuation', 'div', 'body', 'text', 'main', 'signature'].includes(name);
+      const container = decorate(document.createElement(isBlock ? 'div' : 'span'));
+      appendChildren(container);
+      return container;
+    }
+
+    function resetLegalPage() {
+      xmlTree.replaceChildren();
+      xmlContent.scrollTop = 0;
+    }
+
+    function addLegalHeader(kicker, title, subtitle = '') {
+      const header = document.createElement('header');
+      const overline = document.createElement('p');
+      overline.className = 'legal-kicker';
+      overline.textContent = kicker;
+      const heading = document.createElement('h1');
+      heading.textContent = title;
+      header.append(overline, heading);
+      if (subtitle) {
+        const description = document.createElement('p');
+        description.className = 'legal-subtitle';
+        description.textContent = subtitle;
+        header.append(description);
+      }
+      xmlTree.append(header);
+    }
+
+    function addLegalCard(container, title, detail, data) {
+      const button = createLegalButton(title, 'legal-card', data);
+      if (detail) {
+        const small = document.createElement('small');
+        small.textContent = detail;
+        button.append(small);
+      }
+      container.append(button);
+    }
+
+    function updateLegalControls() {
+      const hasUnit = activeLegalUnitIndex >= 0 && legalReader;
+      legalPrevious.disabled = !hasUnit || activeLegalUnitIndex === 0;
+      legalNext.disabled = !hasUnit || activeLegalUnitIndex >= legalReader.units.length - 1;
+      legalNav.querySelectorAll('[data-legal-unit]').forEach(button => {
+        button.classList.toggle('active', Number(button.dataset.legalUnit) === activeLegalUnitIndex);
+      });
+    }
+
+    function renderLegalHome() {
+      if (!legalReader) return;
+      activeLegalUnitIndex = -1;
+      activeLegalQuery = '';
+      resetLegalPage();
+      addLegalHeader(legalReader.schemaLabel, legalReader.documentTitle,
+        legalReader.schema === 'generic'
+          ? 'Readable document text. This file does not use the U.S. Code or eCFR schema.'
+          : 'Browse the legal hierarchy below or use the document search above.');
+      const badges = document.createElement('div');
+      badges.className = 'legal-badges';
+      for (const value of legalReader.metadata) {
+        const badge = document.createElement('span');
+        badge.className = 'legal-badge';
+        badge.textContent = value;
+        badges.append(badge);
+      }
+      const size = document.createElement('span');
+      size.className = 'legal-badge';
+      size.textContent = formatBytes(legalReader.result.xml_byte_size);
+      badges.append(size);
+      xmlTree.append(badges);
+
+      if (!legalReader.groups.length) {
+        const rule = document.createElement('hr');
+        rule.className = 'legal-rule';
+        xmlTree.append(rule);
+        if (legalReader.schema === 'generic') {
+          const readable = cleanLegalText(legalReader.units[0].textContent);
+          const body = document.createElement('p');
+          body.textContent = readable
+            ? readable.slice(0, 250000) + (readable.length > 250000 ? ' … [document view limited to the first 250,000 characters]' : '')
+            : 'This XML file does not contain narrative text that can be presented as a legal document.';
+          xmlTree.append(body);
+        } else {
+          const body = renderLegalNode(legalReader.units[0], 0, { skipHeader: true, root: legalReader.units[0] });
+          if (body) xmlTree.append(body);
+        }
+      } else {
+        const heading = document.createElement('h2');
+        heading.textContent = legalReader.schema === 'ecfr' ? 'Parts' : 'Chapters';
+        const grid = document.createElement('div');
+        grid.className = 'legal-card-grid';
+        legalReader.groups.forEach((group, index) => addLegalCard(
+          grid, group.label,
+          `${group.units.length.toLocaleString()} ${group.units.length === 1 ? 'section' : 'sections'}${group.parentLabel ? ` · ${group.parentLabel}` : ''}`,
+          { legalGroup: String(index) },
+        ));
+        xmlTree.append(heading, grid);
+      }
+      xmlStatus.textContent = `${legalReader.schemaLabel} · ${legalReader.units.length.toLocaleString()} navigable ${legalReader.units.length === 1 ? 'provision' : 'provisions'}`;
+      updateLegalControls();
+    }
+
+    function renderLegalGroup(groupIndex) {
+      const group = legalReader?.groups[groupIndex];
+      if (!group) return;
+      activeLegalUnitIndex = -1;
+      activeLegalQuery = '';
+      resetLegalPage();
+      addLegalHeader(
+        group.parentLabel || `${legalReader.schemaLabel} ${legalReader.schema === 'ecfr' ? 'part' : 'chapter'}`,
+        group.label,
+        `${group.units.length.toLocaleString()} ${group.units.length === 1 ? 'section' : 'sections'}`,
+      );
+      for (const child of group.element.children) {
+        const name = legalName(child);
+        if (['head', 'heading', 'num', 'section', 'div8', 'subchapter', 'part', 'toc'].includes(name)) continue;
+        if (['auth', 'source', 'secauth', 'parauth', 'note', 'notes'].includes(name)) {
+          const rendered = renderLegalNode(child);
+          if (rendered) xmlTree.append(rendered);
+        }
+      }
+      const grid = document.createElement('div');
+      grid.className = 'legal-card-grid';
+      for (const unit of group.units) {
+        addLegalCard(grid, legalElementLabel(unit, legalReader.schema, 'Provision'), '', {
+          legalUnit: String(legalReader.unitIndexes.get(unit)),
+        });
+      }
+      xmlTree.append(grid);
+      xmlStatus.textContent = `${group.label} · choose a section to read`;
+      updateLegalControls();
+    }
+
+    function renderLegalUnit(index, query = '', anchor = '') {
+      if (!legalReader || index < 0 || index >= legalReader.units.length) return;
+      activeLegalUnitIndex = index;
+      activeLegalQuery = query;
+      const unit = legalReader.units[index];
+      const group = legalReader.unitGroups.get(unit);
+      resetLegalPage();
+      const breadcrumb = document.createElement('p');
+      breadcrumb.className = 'legal-breadcrumb';
+      breadcrumb.textContent = [legalReader.documentTitle, group?.parentLabel, group?.label].filter(Boolean).join('  ›  ');
+      xmlTree.append(breadcrumb);
+      addLegalHeader(
+        legalReader.schema === 'ecfr' ? 'Regulation' : legalReader.schema === 'uslm' ? 'Statute' : 'Document provision',
+        legalElementLabel(unit, legalReader.schema, legalReader.documentTitle),
+      );
+      if (unit.getAttribute('status')) {
+        const badges = document.createElement('div');
+        badges.className = 'legal-badges';
+        const badge = document.createElement('span');
+        badge.className = 'legal-badge alert';
+        badge.textContent = unit.getAttribute('status');
+        badges.append(badge);
+        xmlTree.append(badges);
+      }
+      const rule = document.createElement('hr');
+      rule.className = 'legal-rule';
+      xmlTree.append(rule);
+      for (const child of unit.childNodes) {
+        if (child.nodeType === Node.ELEMENT_NODE && ['num', 'heading', 'head'].includes(legalName(child))) continue;
+        const rendered = renderLegalNode(child, 0);
+        if (rendered) xmlTree.append(rendered);
+      }
+      if (legalReader.units.length > 1) {
+        const controls = document.createElement('div');
+        controls.className = 'legal-page-controls';
+        if (index > 0) controls.append(createLegalButton(
+          `← ${legalElementLabel(legalReader.units[index - 1], legalReader.schema, 'Previous section')}`,
+          '', { legalUnit: String(index - 1) },
+        ));
+        if (index < legalReader.units.length - 1) controls.append(createLegalButton(
+          `${legalElementLabel(legalReader.units[index + 1], legalReader.schema, 'Next section')} →`,
+          '', { legalUnit: String(index + 1) },
+        ));
+        xmlTree.append(controls);
+      }
+      xmlStatus.textContent = `${index + 1} of ${legalReader.units.length.toLocaleString()} provisions${query ? ` · highlighted “${query}”` : ''}`;
+      updateLegalControls();
+      if (anchor) {
+        requestAnimationFrame(() => {
+          const target = [...xmlTree.querySelectorAll('[data-legal-anchor]')]
+            .find(element => element.dataset.legalAnchor === anchor);
+          target?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+      } else if (query) {
+        requestAnimationFrame(() => xmlTree.querySelector('mark')?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+      }
+    }
+
+    function legalSearchExcerpt(value, query) {
+      const text = cleanLegalText(value);
+      const position = text.toLocaleLowerCase().indexOf(query.toLocaleLowerCase());
+      const start = Math.max(0, position - 110);
+      const end = Math.min(text.length, position + query.length + 210);
+      return `${start ? '…' : ''}${text.slice(start, end)}${end < text.length ? '…' : ''}`;
+    }
+
+    async function searchXmlDocument(query) {
+      if (!legalReader) return;
+      const generation = ++activeXmlSearchGeneration;
+      const needle = cleanLegalText(query);
+      if (!needle) {
+        renderLegalHome();
+        return;
+      }
+      activeLegalUnitIndex = -1;
+      activeLegalQuery = needle;
+      resetLegalPage();
+      addLegalHeader('Document search', `Results for “${needle}”`, legalReader.documentTitle);
+      const matches = [];
+      for (let index = 0; index < legalReader.units.length; index++) {
+        if (generation !== activeXmlSearchGeneration) return;
+        const text = cleanLegalText(legalReader.units[index].textContent);
+        if (text.toLocaleLowerCase().includes(needle.toLocaleLowerCase())) matches.push({ index, text });
+        if (matches.length >= 200) break;
+        if (index > 0 && index % 100 === 0) {
+          xmlStatus.textContent = `Searching… ${index.toLocaleString()} of ${legalReader.units.length.toLocaleString()} provisions checked`;
+          await new Promise(requestAnimationFrame);
+        }
+      }
+      if (generation !== activeXmlSearchGeneration) return;
+      xmlStatus.textContent = matches.length
+        ? `${matches.length.toLocaleString()} matching ${matches.length === 1 ? 'provision' : 'provisions'}${matches.length === 200 ? ' · first 200 shown' : ''}`
+        : `No provisions contain “${needle}”.`;
+      const results = document.createElement('div');
+      results.className = 'legal-search-results';
+      for (const match of matches) {
+        const unit = legalReader.units[match.index];
+        const button = createLegalButton('', 'legal-search-result', {
+          legalUnit: String(match.index), legalSearchHit: '1',
+        });
+        const title = document.createElement('strong');
+        title.textContent = legalElementLabel(unit, legalReader.schema, 'Provision');
+        const excerpt = document.createElement('span');
+        appendHighlightedLegalText(excerpt, legalSearchExcerpt(match.text, needle));
+        button.append(title, excerpt);
+        results.append(button);
+      }
+      if (!matches.length) {
+        const empty = document.createElement('p');
+        empty.className = 'legal-subtitle';
+        empty.textContent = 'Try a shorter term, section number, or alternate wording.';
+        results.append(empty);
+      }
+      xmlTree.append(results);
+      updateLegalControls();
+    }
+
+    function resolveLegalReference(href) {
+      if (!legalReader || !href) return null;
+      let best = null;
+      for (const [identifier, index] of legalReader.unitIdentifiers) {
+        if ((href === identifier || href.startsWith(identifier + '/')) && (!best || identifier.length > best.identifier.length)) {
+          best = { identifier, index };
+        }
+      }
+      return best;
+    }
+
+    function displayLegalDocumentText(text, result) {
+      const parsed = new DOMParser().parseFromString(text, 'application/xml');
+      const parseError = parsed.getElementsByTagName('parsererror')[0];
+      if (parseError) throw new Error(`XML parser error: ${parseError.textContent.trim().slice(0, 500)}`);
+      activeXmlDocument = parsed;
+      legalReader = buildLegalReader(parsed, result);
+      xmlTitle.textContent = legalReader.documentTitle;
+      renderLegalNavigation();
+      renderLegalHome();
+      return legalReader;
+    }
+
+    async function openXmlViewer(result) {
+      activeXmlSearchGeneration++;
+      activeXmlDocument = null;
+      legalReader = null;
+      activeLegalUnitIndex = -1;
+      activeLegalQuery = '';
+      xmlTitle.textContent = result.title || 'Legal document';
+      xmlStatus.textContent = 'Loading and interpreting the legal document…';
+      xmlTree.replaceChildren();
+      legalNav.replaceChildren();
+      xmlSearchInput.value = '';
+      xmlModal.hidden = false;
+      document.body.classList.add('xml-open');
+      xmlClose.focus();
+      try {
+        const text = await decompressText(Number(result.xml_pack_offset), Number(result.xml_pack_length));
+        if (!text) throw new Error('This browser could not decompress the XML payload. Use a current version of Firefox, Chrome, Edge, or Safari.');
+        displayLegalDocumentText(text, result);
+        xmlSearchInput.focus();
+      } catch (error) {
+        xmlTree.replaceChildren();
+        const message = document.createElement('div');
+        message.className = 'legal-reader-error';
+        message.textContent = error.message || String(error);
+        xmlTree.append(message);
+        xmlStatus.textContent = 'The document could not be rendered.';
+      }
+    }
+
+    function closeXmlViewer() {
+      activeXmlSearchGeneration++;
+      activeXmlDocument = null;
+      legalReader = null;
+      activeLegalUnitIndex = -1;
+      activeLegalQuery = '';
+      xmlModal.hidden = true;
+      document.body.classList.remove('xml-open');
+      xmlTree.replaceChildren();
+      legalNav.replaceChildren();
+    }
+
+    function showLoading() {
+      resultsNode.innerHTML = '<div class="loader"><div class="skeleton"></div><div class="skeleton"></div></div>';
+    }
+
+    function showError(message) {
+      statusNode.textContent = 'Search unavailable';
+      resultsNode.innerHTML = `<div class="empty"><strong>Could not search the corpus.</strong>${escapeHTML(message)}</div>`;
+    }
+
+    function rankMatchInfo(blob) {
+      if (!(blob instanceof Uint8Array) || blob.byteLength < 8) return 0;
+      const data = new DataView(blob.buffer, blob.byteOffset, blob.byteLength);
+      const read = index => data.getUint32(index * 4, true);
+      const phrases = read(0);
+      const columns = read(1);
+      let score = 0;
+      let cursor = 2;
+      for (let phrase = 0; phrase < phrases; phrase++) {
+        for (let column = 0; column < columns; column++) {
+          const hitsHere = read(cursor++);
+          const hitsEverywhere = read(cursor++);
+          const documentsWithHits = read(cursor++);
+          if (hitsHere) {
+            const rarity = Math.log(1 + totalDocuments / Math.max(1, documentsWithHits));
+            score += hitsHere * rarity / Math.sqrt(Math.max(1, hitsEverywhere));
+          }
+        }
+      }
+      return score;
+    }
+
+    async function runSearch() {
+      const phrase = queryInput.value.trim();
+      if (!database || !phrase) {
+        queryInput.focus();
+        statusNode.textContent = 'Enter a query to begin.';
+        return;
+      }
+
+      searchButton.disabled = true;
+      statusNode.textContent = `Searching for “${phrase}”…`;
+      showLoading();
+
+      try {
+        const requested = Number(limitSelect.value);
+        const candidates = Math.max(250, requested * 25);
+        const sourceClause = sourceSelect.value ? ' AND d.source_id=$source' : '';
+        const sql = `SELECT d.*,c.kind,c.pack_offset,c.pack_length,
+          rank_matchinfo(matchinfo(search_index,'pcx')) AS relevance
+          FROM search_index
+          JOIN chunks c ON c.id=search_index.docid
+          JOIN documents d ON d.id=c.document_id
+          WHERE search_index MATCH $query${sourceClause}
+          ORDER BY relevance DESC LIMIT $candidates`;
+        const statement = database.prepare(sql);
+        const parameters = { $query: phrase, $candidates: candidates };
+        if (sourceSelect.value) parameters.$source = sourceSelect.value;
+        statement.bind(parameters);
+        const unique = new Map();
+        while (statement.step()) {
+          const row = statement.getAsObject();
+          if (!unique.has(row.id)) unique.set(row.id, row);
+          if (unique.size >= requested) break;
+        }
+        statement.free();
+        const found = [...unique.values()];
+        visibleResults = new Map(found.map(result => [Number(result.id), result]));
+        await Promise.all(found.map(async result => {
+          const text = await decompressText(result.pack_offset, result.pack_length);
+          result.snippet = highlightedExcerpt(text, phrase);
+        }));
+        statusNode.textContent = `${found.length} ${found.length === 1 ? 'result' : 'results'} for “${phrase}”`;
+        resultsNode.innerHTML = found.length
+          ? found.map(resultCard).join('')
+          : '<div class="empty"><strong>No matching documents.</strong>Try fewer terms, an alternate phrase, or a different collection.</div>';
+      } catch (error) {
+        showError(error.message || String(error));
+      } finally {
+        searchButton.disabled = false;
+      }
+    }
+
+    function singleValue(sql, parameters = {}) {
+      const statement = database.prepare(sql);
+      statement.bind(parameters);
+      const value = statement.step() ? statement.get()[0] : null;
+      statement.free();
+      return value;
+    }
+
+    async function openPackage(files) {
+      const selected = [...files];
+      const file = selected.find(item => /\.(sqlite|sqlite3|db)$/i.test(item.name));
+      const pack = selected.find(item => /\.pack$/i.test(item.name));
+      if (!file || !pack) {
+        databaseProgress.textContent = 'Select both immigration-search.sqlite and immigration-search-text.pack.';
+        return;
+      }
+      databaseProgress.textContent = `Loading ${file.name} (${(file.size / 1048576).toFixed(1)} MB)…`;
+      databaseButton.disabled = true;
+      try {
+        const SQL = await sqlReady;
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        if (database) database.close();
+        database = new SQL.Database(bytes);
+        textPack = pack;
+        const format = singleValue("SELECT value FROM meta WHERE key='format'");
+        if (format !== 'immigration-portable-search-v3') throw new Error('This is not the rights-aware packaged immigration search database.');
+        const expectedPack = singleValue("SELECT value FROM meta WHERE key='text_pack'");
+        if (expectedPack && pack.name !== expectedPack) throw new Error(`Expected the companion file ${expectedPack}.`);
+        totalDocuments = Number(singleValue("SELECT value FROM meta WHERE key='documents'")) || 1;
+        const chunks = Number(singleValue("SELECT value FROM meta WHERE key='chunks'")) || 0;
+        const xmlDocuments = Number(singleValue("SELECT value FROM meta WHERE key='xml_documents'")) || 0;
+        const fullText = Number(singleValue("SELECT value FROM meta WHERE key='full_text_documents'")) || 0;
+        const linkOnly = Number(singleValue("SELECT value FROM meta WHERE key='link_only_documents'")) || 0;
+        const downloaded = Number(singleValue("SELECT COUNT(*) FROM documents WHERE status='ok'")) || 0;
+        database.create_function('rank_matchinfo', rankMatchInfo);
+        statsNode.innerHTML = `<strong>${totalDocuments.toLocaleString()}</strong> public records<br><span>${fullText.toLocaleString()} full-text · ${linkOnly.toLocaleString()} link-only · ${xmlDocuments.toLocaleString()} legal XML</span>`;
+        sourceSelect.length = 1;
+        const sourceStatement = database.prepare(`SELECT s.id,s.title FROM sources s
+          WHERE EXISTS (SELECT 1 FROM documents d WHERE d.source_id=s.id) ORDER BY s.title`);
+        while (sourceStatement.step()) {
+          const source = sourceStatement.getAsObject();
+          const option = document.createElement('option');
+          option.value = source.id;
+          option.textContent = source.title;
+          sourceSelect.append(option);
+        }
+        sourceStatement.free();
+        databaseLoader.hidden = true;
+        document.querySelector('#online-loader').hidden = true;
+        form.hidden = false;
+        examples.hidden = false;
+        statusNode.textContent = `Ready — ${fullText.toLocaleString()} rights-cleared full-text records available.`;
+        resultsNode.innerHTML = '<div class="empty"><strong>Your corpus is ready.</strong>Choose an example above or search for an immigration topic.</div>';
+        queryInput.focus();
+        return true;
+      } catch (error) {
+        if (database) database.close();
+        database = null;
+        textPack = null;
+        databaseProgress.textContent = error.message || String(error);
+        databaseButton.disabled = false;
+        return false;
+      }
+    }
+
+    if (HOSTED_MANIFEST && /^https?:$/.test(location.protocol)) {
+      const onlineLoader = document.querySelector('#online-loader');
+      const onlineButton = document.querySelector('#online-button');
+      const onlineProgress = document.querySelector('#online-progress');
+      const megabytes = (HOSTED_MANIFEST.database.download_bytes / 1048576).toFixed(0);
+      onlineLoader.hidden = false;
+      document.querySelector('#online-summary').textContent = `${HOSTED_MANIFEST.documents.toLocaleString()} records · ${megabytes} MB index download`;
+      onlineProgress.textContent = 'Snapshot: July 31–August 1, 2026. Use the local file picker above for offline files.';
+      statusNode.textContent = 'Load the online index or select your offline search files.';
+      onlineButton.addEventListener('click', async () => {
+        onlineButton.disabled = true;
+        databaseButton.disabled = true;
+        onlineProgress.textContent = 'Downloading and checking the search index…';
+        try {
+          const files = await LegalCorpusHosting.load(HOSTED_MANIFEST, location.href, (loaded, total) => {
+            onlineProgress.textContent = `Index: ${(loaded / 1048576).toFixed(1)} / ${(total / 1048576).toFixed(1)} MB (${Math.round(100 * loaded / total)}%)`;
+          });
+          onlineProgress.textContent = 'Opening the search index…';
+          const ready = await openPackage(files);
+          if (!ready) throw new Error(databaseProgress.textContent);
+        } catch (error) {
+          onlineProgress.textContent = error.message || String(error);
+          onlineButton.disabled = false;
+          databaseButton.disabled = false;
+        }
+      });
+    }
+
+    databaseButton.addEventListener('click', () => databaseFile.click());
+    databaseFile.addEventListener('change', () => {
+      if (databaseFile.files.length) openPackage(databaseFile.files);
+    });
+    for (const eventName of ['dragenter', 'dragover']) {
+      databaseLoader.addEventListener(eventName, event => {
+        event.preventDefault(); databaseLoader.classList.add('dragging');
+      });
+    }
+    for (const eventName of ['dragleave', 'drop']) {
+      databaseLoader.addEventListener(eventName, event => {
+        event.preventDefault(); databaseLoader.classList.remove('dragging');
+      });
+    }
+    databaseLoader.addEventListener('drop', event => {
+      if (event.dataTransfer.files.length) openPackage(event.dataTransfer.files);
+    });
+    form.addEventListener('submit', event => { event.preventDefault(); runSearch(); });
+    resultsNode.addEventListener('click', event => {
+      const button = event.target.closest('[data-xml-document]');
+      if (!button) return;
+      const result = visibleResults.get(Number(button.dataset.xmlDocument));
+      if (result) openXmlViewer(result);
+    });
+    xmlSearchForm.addEventListener('submit', event => {
+      event.preventDefault();
+      searchXmlDocument(xmlSearchInput.value);
+    });
+    function handleLegalReaderClick(event) {
+      const button = event.target.closest('button');
+      if (!button || !legalReader) return;
+      if (button.dataset.legalHome) {
+        xmlSearchInput.value = '';
+        activeXmlSearchGeneration++;
+        renderLegalHome();
+        return;
+      }
+      if (button.dataset.legalGroup !== undefined) {
+        renderLegalGroup(Number(button.dataset.legalGroup));
+        return;
+      }
+      if (button.dataset.legalUnit !== undefined) {
+        const query = button.dataset.legalSearchHit ? activeLegalQuery : '';
+        renderLegalUnit(Number(button.dataset.legalUnit), query);
+        return;
+      }
+      if (button.dataset.legalReference) {
+        const target = resolveLegalReference(button.dataset.legalReference);
+        if (target) renderLegalUnit(target.index, '', button.dataset.legalReference);
+        else xmlStatus.textContent = 'That cross-reference points outside this document. Use the main corpus search to locate it.';
+      }
+    }
+    legalNav.addEventListener('click', handleLegalReaderClick);
+    xmlTree.addEventListener('click', handleLegalReaderClick);
+    legalHome.addEventListener('click', () => {
+      xmlSearchInput.value = '';
+      activeXmlSearchGeneration++;
+      renderLegalHome();
+    });
+    legalPrevious.addEventListener('click', () => {
+      if (activeLegalUnitIndex > 0) renderLegalUnit(activeLegalUnitIndex - 1);
+    });
+    legalNext.addEventListener('click', () => {
+      if (legalReader && activeLegalUnitIndex < legalReader.units.length - 1) renderLegalUnit(activeLegalUnitIndex + 1);
+    });
+    xmlClose.addEventListener('click', closeXmlViewer);
+    xmlModal.addEventListener('click', event => { if (event.target === xmlModal) closeXmlViewer(); });
+    document.querySelectorAll('.example').forEach(button => button.addEventListener('click', () => {
+      queryInput.value = button.dataset.query;
+      runSearch();
+    }));
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && !xmlModal.hidden) {
+        closeXmlViewer();
+        return;
+      }
+      if (event.key === '/' && document.activeElement !== queryInput) {
+        event.preventDefault(); queryInput.focus();
+      }
+      if (event.key === 'Escape' && document.activeElement === queryInput) queryInput.value = '';
+    });
+  </script>
+</body>
+</html>

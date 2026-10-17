@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "reviewed_at": "2026-08-02",
+  "review_scope": "Public U.S. distribution of extracted legal text, metadata, and approved legal XML; original mirrored files are not included.",
+  "default": {
+    "disposition": "link_only",
+    "rights_status": "review_required",
+    "rights_basis": "No source-specific redistribution determination has been recorded.",
+    "redistribution_scope": "metadata_and_official_link_only",
+    "review_note": "Full text is withheld until the source is reviewed.",
+    "legal_xml": false,
+    "scan_notices": true
+  },
+  "archive_members": {
+    "default_disposition": "omit",
+    "default_note": "Internal ZIP, DOCX, and XLSX members are omitted from the public search package to avoid duplicating embedded graphics, themes, metadata, and other non-document assets.",
+    "approved": {
+      "uscode_current": {
+        "extensions": [".xml"],
+        "disposition": "full_text",
+        "legal_xml": true,
+        "review_note": "Official OLRC U.S. Code XML extracted from the agency bulk ZIP."
+      }
+    }
+  },
+  "omit_media_prefixes": ["image/", "audio/", "video/", "font/"],
+  "omit_extensions": [".bin", ".exe", ".dll", ".so", ".dylib", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".woff", ".woff2", ".ttf", ".otf"],
+  "notice_scan_characters": 40000,
+  "notice_patterns": [
+    {"label": "copyright symbol", "pattern": "©"},
+    {"label": "copyright notice", "pattern": "\\bcopyright\\s+(?:\\(c\\)|[12][0-9]{3}|notice|by)"},
+    {"label": "all rights reserved", "pattern": "\\ball rights reserved\\b"},
+    {"label": "permission-limited material", "pattern": "\\b(?:used|reprinted|reproduced) with permission\\b"},
+    {"label": "licensed material", "pattern": "\\b(?:licensed (?:material|content)|licensed from)\\b"}
+  ],
+  "sources": {
+    "uscode_current": {
+      "disposition": "link_only",
+      "rights_status": "public_domain_us",
+      "rights_basis": "Federal statutory text and OLRC employee-created bulk data; 17 U.S.C. 105 and the government-edicts doctrine.",
+      "redistribution_scope": "unrestricted_in_united_states",
+      "review_note": "Only the official XML archive members receive full-text and legal-reader treatment; download pages and ZIP containers remain link-only.",
+      "legal_xml": false,
+      "scan_notices": false
+    },
+    "ecfr_current_immigration": {
+      "disposition": "full_text",
+      "rights_status": "public_domain_us",
+      "rights_basis": "Federal regulatory text and OFR/GPO employee-created bulk XML; 17 U.S.C. 105 and the government-edicts doctrine.",
+      "redistribution_scope": "unrestricted_in_united_states",
+      "review_note": "Official government bulk XML is included in the legal reader.",
+      "legal_xml": true,
+      "scan_notices": false
+    },
+    "uscis_policy_manual": {
+      "disposition": "full_text",
+      "rights_status": "us_government_work_presumed",
+      "rights_basis": "Official USCIS employee-authored policy material is generally a U.S. Government work under 17 U.S.C. 105.",
+      "redistribution_scope": "unrestricted_in_united_states_subject_to_embedded_third_party_rights",
+      "review_note": "Only extracted text is redistributed; the mirrored webpage/PDF and branding are excluded.",
+      "legal_xml": false,
+      "scan_notices": true
+    },
+    "uscis_policy_manual_attachments": {
+      "disposition": "full_text",
+      "rights_status": "us_government_work_presumed",
+      "rights_basis": "Official USCIS policy attachments are presumed federal employee works unless a document-specific notice says otherwise.",
+      "redistribution_scope": "unrestricted_in_united_states_subject_to_embedded_third_party_rights",
+      "review_note": "Document-specific copyright notices trigger link-only treatment.",
+      "legal_xml": false,
+      "scan_notices": true
+    },
+    "uscis_law_policy_indexes": {
+      "disposition": "full_text",
+      "rights_status": "us_government_work_presumed",
+      "rights_basis": "Official USCIS policy and adjudicative material is presumed federal employee work unless marked otherwise.",
+      "redistribution_scope": "unrestricted_in_united_states_subject_to_embedded_third_party_rights",
+      "review_note": "Only extracted text is redistributed; forms, graphics, and original binary files are excluded.",
+      "legal_xml": false,
+      "scan_notices": true
+    },
+    "dos_9fam": {
+      "disposition": "full_text",
+      "rights_status": "us_government_work_presumed",
+      "rights_basis": "The public Foreign Affairs Manual is official Department of State policy created in the course of federal duties.",
+      "redistribution_scope": "unrestricted_in_united_states_subject_to_embedded_third_party_rights",
+      "review_note": "Extracted manual text is included; original webpage assets and attachments are not redistributed.",
+      "legal_xml": false,
+      "scan_notices": true
+    },
+    "eoir_policy_manual": {
+      "disposition": "full_text",
+      "rights_status": "us_government_work_presumed",
+      "rights_basis": "Official DOJ/EOIR employee-authored policy material; 17 U.S.C. 105 and DOJ public-domain reuse policy.",
+      "redistribution_scope": "unrestricted_in_united_states_subject_to_embedded_third_party_rights",
+      "review_note": "Only extracted text is redistributed; DOJ seals, photos, and original files are excluded.",
+      "legal_xml": false,
+      "scan_notices": true
+    },
+    "eoir_precedent_decisions": {
+      "disposition": "full_text",
+      "rights_status": "public_domain_us",
+      "rights_basis": "Official federal adjudicative opinions; 17 U.S.C. 105 and the government-edicts doctrine.",
+      "redistribution_scope": "unrestricted_in_united_states_subject_to_third_party_exhibits",
+      "review_note": "Published opinion text is included; original PDF graphics and any separately authored exhibits are not included.",
+      "legal_xml": false,
+      "scan_notices": true
+    },
+    "doj_immigration_denaturalization": {
+      "disposition": "full_text",
+      "rights_status": "us_government_work_presumed",
+      "rights_basis": "Official DOJ employee-authored manual and litigation material; 17 U.S.C. 105 and DOJ public-domain reuse policy.",
+      "redistribution_scope": "unrestricted_in_united_states_subject_to_embedded_third_party_rights",
+      "review_note": "Only extracted text is redistributed; DOJ branding and original webpages are excluded.",
+      "legal_xml": false,
+      "scan_notices": true
+    },
+    "cbp_border_search_and_directives": {
+      "disposition": "full_text",
+      "rights_status": "agency_reuse_policy_caution",
+      "rights_basis": "Official CBP material is generally a federal work, but CBP's website reuse policy contains noncommercial language and third-party exceptions.",
+      "redistribution_scope": "noncommercial_research_or_separately_cleared",
+      "review_note": "Extracted text is included for noncommercial research distribution; original pages, seals, photographs, and binaries are excluded.",
+      "legal_xml": false,
+      "scan_notices": true
+    },
+    "ice_enforcement_detention_sevp": {
+      "disposition": "full_text",
+      "rights_status": "us_government_work_presumed",
+      "rights_basis": "Official ICE/DHS employee-authored material is generally a U.S. Government work under 17 U.S.C. 105.",
+      "redistribution_scope": "unrestricted_in_united_states_subject_to_embedded_third_party_rights",
+      "review_note": "Only extracted document text is included; spreadsheet internals, media, website assets, and original binaries are omitted.",
+      "legal_xml": false,
+      "scan_notices": true
+    },
+    "dol_foreign_labor": {
+      "disposition": "full_text",
+      "rights_status": "us_government_work_presumed",
+      "rights_basis": "Official DOL employee-authored material is generally a U.S. Government work under 17 U.S.C. 105.",
+      "redistribution_scope": "unrestricted_in_united_states_subject_to_embedded_third_party_rights",
+      "review_note": "Document-specific notices trigger link-only treatment.",
+      "legal_xml": false,
+      "scan_notices": true
+    },
+    "govinfo_case_law_catalog": {
+      "disposition": "link_only",
+      "rights_status": "metadata_only",
+      "rights_basis": "Catalog titles, official URLs, and source metadata are retained; API response bodies are not redistributed.",
+      "redistribution_scope": "metadata_and_official_link_only",
+      "review_note": "Use the official link to obtain the court document.",
+      "legal_xml": false,
+      "scan_notices": false
+    },
+    "govinfo_case_law_documents": {
+      "disposition": "full_text",
+      "rights_status": "public_domain_us",
+      "rights_basis": "Official federal judicial opinions; 17 U.S.C. 105 and the government-edicts doctrine.",
+      "redistribution_scope": "unrestricted_in_united_states_subject_to_third_party_filings_and_exhibits",
+      "review_note": "Opinion text is included; third-party filings or exhibits require separate review.",
+      "legal_xml": false,
+      "scan_notices": true
+    },
+    "federal_register_immigration": {
+      "disposition": "full_text",
+      "rights_status": "public_domain_us",
+      "rights_basis": "Official federal rulemaking and presidential documents; 17 U.S.C. 105 and the government-edicts doctrine.",
+      "redistribution_scope": "unrestricted_in_united_states_subject_to_embedded_third_party_rights",
+      "review_note": "Extracted official text is included; document-specific notices trigger link-only treatment.",
+      "legal_xml": false,
+      "scan_notices": true
+    },
+    "agency_sitemap_inventories": {
+      "disposition": "link_only",
+      "rights_status": "metadata_only",
+      "rights_basis": "Only official URL inventory metadata is distributed.",
+      "redistribution_scope": "metadata_and_official_link_only",
+      "review_note": "Sitemap bodies and unrelated site content are not included.",
+      "legal_xml": false,
+      "scan_notices": false
+    }
+  }
+}

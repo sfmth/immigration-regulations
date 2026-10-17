@@ -1,0 +1,298 @@
+{
+  "schema_version": 1,
+  "retrieval_policy": {
+    "user_agent": "ImmigrationLegalCorpus/1.0 (public legal research; local archival copy)",
+    "timeout_seconds": 90,
+    "retries": 4,
+    "default_delay_seconds": 0.35,
+    "max_file_bytes": 524288000
+  },
+  "sources": [
+    {
+      "id": "uscode_current",
+      "title": "Current United States Code release point",
+      "kind": "uscode_current",
+      "agency": "Office of the Law Revision Counsel, U.S. House of Representatives",
+      "authority_tier": "binding_law",
+      "category": "statute",
+      "profiles": ["core", "expanded"],
+      "index_url": "https://uscode.house.gov/download/download.shtml",
+      "titles": "all",
+      "formats": ["xml"],
+      "extra_formats": {"8": ["htm", "pdf"]},
+      "notes": "All titles are retained so provisions outside Title 8 are not silently missed. Title 8 is not positive law; consult the underlying Statutes at Large where exact enactment text controls."
+    },
+    {
+      "id": "ecfr_current_immigration",
+      "title": "Current eCFR titles with immigration, border, visa, labor, health, and adjudication rules",
+      "kind": "ecfr_titles",
+      "agency": "Office of the Federal Register / Government Publishing Office",
+      "authority_tier": "current_regulatory_text",
+      "category": "regulation",
+      "profiles": ["core", "expanded"],
+      "url_template": "https://www.govinfo.gov/bulkdata/ECFR/title-{title}/ECFR-title{title}.xml",
+      "titles": [5, 6, 8, 19, 20, 22, 28, 29, 31, 32, 42, 45, 46, 49],
+      "notes": "The eCFR is current but unofficial. Annual CFR editions and Federal Register source rules are separate sources."
+    },
+    {
+      "id": "uscis_policy_manual",
+      "title": "USCIS Policy Manual, complete current export",
+      "kind": "crawl",
+      "agency": "U.S. Citizenship and Immigration Services",
+      "authority_tier": "agency_policy",
+      "category": "officer_manual",
+      "profiles": ["core", "expanded"],
+      "seeds": ["https://www.uscis.gov/book/export/html/68600"],
+      "allowed_page_regex": "^https://www\\.uscis\\.gov/book/export/html/68600$",
+      "document_url_regex": "^https://www\\.uscis\\.gov/sites/default/files/document/(policy-manual-(updates|resources|afm)|policy-alerts|policy-memoranda)/.+",
+      "max_depth": 0,
+      "download_linked_documents": false,
+      "delay_seconds": 10,
+      "notes": "Official bulk export of all current volumes, including Volume 6 employment/NIW, Volume 7 adjustment and marriage, Volume 8 admissibility, and Volume 12 citizenship/revocation. Historical/linked attachments are a separate expanded source."
+    },
+    {
+      "id": "uscis_policy_manual_attachments",
+      "title": "USCIS Policy Manual linked updates, resources, alerts, memoranda, and retained AFM files",
+      "kind": "crawl",
+      "agency": "U.S. Citizenship and Immigration Services",
+      "authority_tier": "agency_policy_archive",
+      "category": "officer_manual_attachment",
+      "profiles": ["expanded"],
+      "seeds": ["https://www.uscis.gov/book/export/html/68600"],
+      "allowed_page_regex": "^https://www\\.uscis\\.gov/book/export/html/68600$",
+      "document_url_regex": "^https://www\\.uscis\\.gov/sites/default/files/document/(policy-manual-(updates|resources|afm)|policy-alerts|policy-memoranda)/.+",
+      "max_depth": 0,
+      "download_linked_documents": true,
+      "delay_seconds": 10,
+      "notes": "Expanded historical and attachment layer. USCIS publishes a 10-second crawl delay, so a full first sync takes substantial time."
+    },
+    {
+      "id": "uscis_law_policy_indexes",
+      "title": "USCIS laws, policy memoranda, administrative appeals, and forms indexes",
+      "kind": "crawl",
+      "agency": "U.S. Citizenship and Immigration Services",
+      "authority_tier": "agency_policy",
+      "category": "agency_material",
+      "profiles": ["core", "expanded"],
+      "seeds": [
+        "https://www.uscis.gov/laws-and-policy",
+        "https://www.uscis.gov/node/23734",
+        "https://www.uscis.gov/administrative-appeals/aao-decisions",
+        "https://www.uscis.gov/about-us/aao-adopted-decisions",
+        "https://www.uscis.gov/forms/all-forms"
+      ],
+      "allowed_page_regex": "^https://www\\.uscis\\.gov/(laws-and-policy|administrative-appeals|about-us/aao-adopted-decisions|forms/all-forms)(/.*)?$",
+      "document_url_regex": "^https://www\\.uscis\\.gov/sites/default/files/document/.+\\.(pdf|docx?|xlsx?|csv)(\\?.*)?$",
+      "max_depth": 1,
+      "download_linked_documents": true,
+      "delay_seconds": 10,
+      "notes": "Core follows collection and form indexes one level. The expanded sitemap source inventories the wider site."
+    },
+    {
+      "id": "dos_9fam",
+      "title": "Department of State 9 FAM visa adjudication manual",
+      "kind": "crawl",
+      "agency": "U.S. Department of State",
+      "authority_tier": "agency_policy",
+      "category": "officer_manual",
+      "profiles": ["core", "expanded"],
+      "seeds": [
+        "https://fam.state.gov/Volumes/Details/09FAM/",
+        "https://fam.state.gov/api/Tree/GetTreeByVolumeId?Id=09FAM"
+      ],
+      "allowed_page_regex": "^https://fam\\.state\\.gov/(Volumes/Details/09FAM/?|FAM/09FAM/[A-Za-z0-9._~-]+\\.html)(#.*)?$",
+      "document_url_regex": "^https://fam\\.state\\.gov/.+\\.(pdf|docx?)(\\?.*)?$",
+      "max_depth": 1,
+      "download_linked_documents": true,
+      "delay_seconds": 0.6,
+      "extra_ca_file": "data/certs/SectigoPublicServerAuthenticationCAOVR36.pem",
+      "notes": "9 FAM is the officer manual for immigrant and nonimmigrant visa issuance, refusals, revocations, waivers, student classifications, and family/employment classifications. Redacted or unavailable sections cannot be collected."
+    },
+    {
+      "id": "eoir_policy_manual",
+      "title": "EOIR Policy Manual",
+      "kind": "crawl",
+      "agency": "DOJ Executive Office for Immigration Review",
+      "authority_tier": "agency_policy",
+      "category": "court_procedure",
+      "profiles": ["core", "expanded"],
+      "seeds": ["https://www.justice.gov/eoir/policy-manual-eoir"],
+      "allowed_page_regex": "^https://www\\.justice\\.gov/eoir/policy-manual-eoir(/.*)?$",
+      "document_url_regex": "^https://www\\.justice\\.gov/eoir/(media/[0-9]+/dl|page/file/[0-9]+/(dl|download)|reference-materials/.+/download)(\\?.*)?$",
+      "max_depth": 5,
+      "download_linked_documents": true,
+      "delay_seconds": 0.35
+    },
+    {
+      "id": "eoir_precedent_decisions",
+      "title": "AG, BIA, DHS/AAO/INS, and OCAHO published precedent decisions",
+      "kind": "crawl",
+      "agency": "DOJ Executive Office for Immigration Review",
+      "authority_tier": "binding_agency_precedent",
+      "category": "administrative_case_law",
+      "profiles": ["core", "expanded"],
+      "seeds": [
+        "https://www.justice.gov/eoir/ag-bia-decisions",
+        "https://www.justice.gov/eoir/office-of-the-chief-administrative-hearing-officer-decisions",
+        "https://www.justice.gov/archives/eoir/dhs-aao-ins-decisions"
+      ],
+      "allowed_page_regex": "^https://www\\.justice\\.gov/(archives/)?eoir/(ag-bia-decisions|precedent-decisions-volume-[0-9]+|volume-[0-9]+|office-of-the-chief-administrative-hearing-officer-decisions|ocaho-decisions-volume-[0-9]+|listing-volume-[0-9]+-decisions|dhs-aao-ins-decisions|vll/intdec/nfvol[0-9]+\\.html|OcahoMain/publisheddecisions/.+\\.htm)(/.*)?$",
+      "document_url_regex": "^https://www\\.justice\\.gov/((archives/)?eoir/(media/[0-9]+/dl|page/file/[0-9]+/(dl|download)|sites/default/files/.+\\.pdf|d9/.+\\.pdf|reference-materials/.+/download|vll/intdec/.+\\.pdf|OcahoMain/publisheddecisions/.+\\.pdf)|sites/default/files/eoir/.+\\.pdf|d9/.+\\.pdf)(\\?.*)?$",
+      "max_depth": 2,
+      "download_linked_documents": true,
+      "delay_seconds": 0.25,
+      "notes": "Published precedent is binding as specified by 8 CFR. Unpublished BIA decisions are a separate, nonprecedential FOIA collection."
+    },
+    {
+      "id": "doj_immigration_denaturalization",
+      "title": "DOJ immigration litigation and denaturalization procedures",
+      "kind": "crawl",
+      "agency": "U.S. Department of Justice",
+      "authority_tier": "agency_policy",
+      "category": "prosecution_litigation_manual",
+      "profiles": ["core", "expanded"],
+      "seeds": [
+        "https://www.justice.gov/jm/jm-4-7000-immigration-litigation",
+        "https://www.justice.gov/jm/jm-9-73000-immigrant-violations-passport-and-visa",
+        "https://www.justice.gov/civil/office-immigration-litigation"
+      ],
+      "allowed_page_regex": "^https://www\\.justice\\.gov/(jm/jm-(4-7|9-73)[0-9-]*-?.*|civil/office-immigration-litigation.*)$",
+      "document_url_regex": "^https://www\\.justice\\.gov/(civil/)?media/[0-9]+/dl(\\?.*)?$",
+      "max_depth": 2,
+      "download_linked_documents": true,
+      "delay_seconds": 0.35
+    },
+    {
+      "id": "cbp_border_search_and_directives",
+      "title": "CBP immigration inspection, border-search, policies, procedures, and directives",
+      "kind": "crawl",
+      "agency": "U.S. Customs and Border Protection",
+      "authority_tier": "agency_policy",
+      "category": "enforcement_manual",
+      "profiles": ["core", "expanded"],
+      "seeds": [
+        "https://www.cbp.gov/travel/cbp-search-authority/border-search-electronic-devices",
+        "https://www.cbp.gov/border-security/ports-entry/immigration-inspection-program",
+        "https://www.cbp.gov/newsroom/accountability-and-transparency/policies-procedures-and-directives"
+      ],
+      "allowed_page_regex": "^https://www\\.cbp\\.gov/(travel/cbp-search-authority|border-security/ports-entry/(immigration-inspection-program|overview)|newsroom/accountability-and-transparency/policies-procedures-and-directives|document/(directives|guidance|publications|foia-record|legal-notice))(/.*)?(\\?.*)?$",
+      "document_url_regex": "^https://www\\.cbp\\.gov/sites/default/files/.+\\.(pdf|docx?|xlsx?)(\\?.*)?$",
+      "max_depth": 2,
+      "download_linked_documents": true,
+      "delay_seconds": 0.5
+    },
+    {
+      "id": "ice_enforcement_detention_sevp",
+      "title": "ICE enforcement, detention standards, and SEVP/SEVIS student guidance",
+      "kind": "crawl",
+      "agency": "U.S. Immigration and Customs Enforcement",
+      "authority_tier": "agency_policy",
+      "category": "enforcement_student_procedure",
+      "profiles": ["core", "expanded"],
+      "seeds": [
+        "https://www.ice.gov/detain",
+        "https://www.ice.gov/detain/detention-management",
+        "https://www.ice.gov/sevis",
+        "https://www.ice.gov/sevis/schools",
+        "https://www.ice.gov/sevis/students",
+        "https://www.ice.gov/sevis/practical-training",
+        "https://www.ice.gov/sevis/employment",
+        "https://www.ice.gov/sevis/travel"
+      ],
+      "allowed_page_regex": "^https://www\\.ice\\.gov/(detain|sevis|sevp|factsheets|identify-and-arrest|immigration-detainers|287g|remove)(/.*)?(\\?.*)?$",
+      "document_url_regex": "^https://(www\\.ice\\.gov/doclib|studyinthestates\\.dhs\\.gov/sites/default/files)/.+\\.(pdf|docx?|xlsx?)(\\?.*)?$",
+      "max_depth": 2,
+      "download_linked_documents": true,
+      "delay_seconds": 0.5
+    },
+    {
+      "id": "dol_foreign_labor",
+      "title": "DOL foreign labor certification regulations, guidance, and handbooks",
+      "kind": "crawl",
+      "agency": "U.S. Department of Labor",
+      "authority_tier": "agency_policy",
+      "category": "employment_immigration_procedure",
+      "profiles": ["core", "expanded"],
+      "seeds": [
+        "https://www.dol.gov/agencies/eta/foreign-labor",
+        "https://www.dol.gov/agencies/whd/immigration"
+      ],
+      "allowed_page_regex": "^https://www\\.dol\\.gov/agencies/(eta/foreign-labor|whd/immigration)(/.*)?(\\?.*)?$",
+      "document_url_regex": "^https://www\\.dol\\.gov/sites/dolgov/files/.+\\.(pdf|docx?|xlsx?|csv)(\\?.*)?$",
+      "max_depth": 3,
+      "download_linked_documents": true,
+      "delay_seconds": 0.5
+    },
+    {
+      "id": "govinfo_case_law_catalog",
+      "title": "Official Supreme Court and selected federal immigration opinion catalog",
+      "kind": "govinfo_search",
+      "agency": "U.S. Government Publishing Office / Administrative Office of the U.S. Courts",
+      "authority_tier": "judicial_opinion_catalog",
+      "category": "federal_case_law",
+      "profiles": ["core"],
+      "api_url": "https://api.govinfo.gov/search",
+      "page_size": 1000,
+      "download_documents": false,
+      "queries": [
+        "collection:(USREPORTS) and (immigration OR immigrant OR nonimmigrant OR deportation OR naturalization OR alien OR asylum OR refugee OR visa OR \"border search\")",
+        "collection:(USCOURTS) and courttype:appellate and \"Immigration and Nationality Act\"",
+        "collection:(USCOURTS) and (denaturalization OR \"revocation of naturalization\" OR \"national interest waiver\" OR \"student visa\" OR SEVIS OR \"marriage fraud\" OR \"border search\")"
+      ],
+      "notes": "Catalogs matching official GovInfo results and direct GPO PDF URLs. GovInfo's USCOURTS holdings are selected/incomplete and generally date from 2004; keyword retrieval has both omissions and false positives. Cataloged records are not represented as locally downloaded documents."
+    },
+    {
+      "id": "govinfo_case_law_documents",
+      "title": "Official Supreme Court and selected federal immigration opinion PDFs",
+      "kind": "govinfo_search",
+      "agency": "U.S. Government Publishing Office / Administrative Office of the U.S. Courts",
+      "authority_tier": "judicial_opinion",
+      "category": "federal_case_law",
+      "profiles": ["expanded"],
+      "api_url": "https://api.govinfo.gov/search",
+      "page_size": 1000,
+      "download_documents": true,
+      "queries": [
+        "collection:(USREPORTS) and (immigration OR immigrant OR nonimmigrant OR deportation OR naturalization OR alien OR asylum OR refugee OR visa OR \"border search\")",
+        "collection:(USCOURTS) and courttype:appellate and \"Immigration and Nationality Act\"",
+        "collection:(USCOURTS) and (denaturalization OR \"revocation of naturalization\" OR \"national interest waiver\" OR \"student visa\" OR SEVIS OR \"marriage fraud\" OR \"border search\")"
+      ],
+      "notes": "Expanded download of the official PDFs cataloged by the companion source. This is a high-recall public subset, not every immigration-related federal decision and not a citator."
+    },
+    {
+      "id": "federal_register_immigration",
+      "title": "Federal Register immigration rulemaking and presidential/agency documents",
+      "kind": "federal_register",
+      "agency": "Office of the Federal Register",
+      "authority_tier": "official_rulemaking_record",
+      "category": "federal_register",
+      "profiles": ["expanded"],
+      "api_url": "https://www.federalregister.gov/api/v1/documents.json",
+      "terms": [
+        "immigration", "nonimmigrant", "visa", "asylum", "refugee", "naturalization",
+        "denaturalization", "deportation", "removal", "parole", "alien", "SEVIS",
+        "student and exchange visitor", "foreign labor certification", "border search"
+      ],
+      "per_page": 1000,
+      "download_formats": ["raw_text", "pdf"],
+      "notes": "Expanded collection. Search terms are deliberately broad and deduplicated; the manifest records each query. Historical Federal Register coverage and indexing can still contain gaps."
+    },
+    {
+      "id": "agency_sitemap_inventories",
+      "title": "Agency-wide official URL inventories",
+      "kind": "sitemap_inventory",
+      "agency": "USCIS / CBP / ICE / DOJ",
+      "authority_tier": "discovery_inventory",
+      "category": "source_inventory",
+      "profiles": ["expanded"],
+      "sitemaps": [
+        "https://www.uscis.gov/sitemap.xml",
+        "https://www.cbp.gov/sitemap.xml",
+        "https://www.ice.gov/sitemap.xml",
+        "https://www.justice.gov/sitemap.xml"
+      ],
+      "download_documents": false,
+      "notes": "Inventories all agency-published URLs without pretending every press release or facility page is law. Used for gap audits and future targeted syncs."
+    }
+  ]
+}

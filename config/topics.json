@@ -1,0 +1,19 @@
+{
+  "admission_and_inspection": ["admission", "applicant for admission", "port of entry", "inspection", "inadmissib"],
+  "asylum_refugee_cat": ["asylum", "refugee", "withholding of removal", "convention against torture", "credible fear", "reasonable fear"],
+  "border_search_and_seizure": ["border search", "search and seizure", "electronic device", "fourth amendment", "warrantless search", "checkpoint"],
+  "citizenship_naturalization": ["citizenship", "naturalization", "acquisition of citizenship", "derivative citizenship"],
+  "denaturalization_revocation": ["denaturalization", "revocation of naturalization", "8 u.s.c. 1451", "18 u.s.c. 1425", "ina 340"],
+  "detention_bond_custody": ["detention", "custody determination", "bond hearing", "mandatory detention", "alternatives to detention"],
+  "employment_nonimmigrant": ["h-1b", "h-2a", "h-2b", "l-1", "o-1", "p-1", "r-1", "tn visa", "temporary worker"],
+  "employment_immigrant_niw": ["national interest waiver", "matter of dhanasar", "eb-1", "eb-2", "eb-3", "labor certification", "schedule a"],
+  "enforcement_arrest_removal": ["removal proceedings", "deportation", "expedited removal", "notice to appear", "immigration arrest", "reinstatement of removal"],
+  "family_marriage": ["marriage", "spouse", "fianc", "conditional permanent resident", "marriage fraud", "i-130", "i-751"],
+  "fraud_misrepresentation": ["fraud", "misrepresentation", "false claim", "document fraud", "visa fraud"],
+  "humanitarian": ["temporary protected status", "humanitarian parole", "u nonimmigrant", "t nonimmigrant", "vawa", "special immigrant juvenile"],
+  "judicial_review_habeas": ["judicial review", "petition for review", "habeas corpus", "jurisdiction stripping"],
+  "student_exchange_visitor": ["f-1", "f-2", "m-1", "m-2", "j-1", "j-2", "student visa", "sevis", "sevp", "optional practical training", "curricular practical training", "exchange visitor"],
+  "visa_issuance_refusal_revocation": ["visa refusal", "visa revocation", "214(b)", "221(g)", "consular officer", "doctrine of consular nonreviewability"],
+  "waivers_relief": ["waiver of inadmissibility", "cancellation of removal", "adjustment of status", "provisional unlawful presence waiver"],
+  "worksite_employer_sanctions": ["employer sanctions", "employment verification", "form i-9", "unauthorized alien", "immigration-related unfair employment practice"]
+}
