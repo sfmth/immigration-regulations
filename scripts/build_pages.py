@@ -14,9 +14,11 @@ import sqlite3
 try:
     from scripts.build_portable import prepared_template, PICKER_TEMPLATE
     from scripts.build_release import validate_portable_database
+    from scripts.build_discovery import build as build_discovery
 except ModuleNotFoundError:
     from build_portable import prepared_template, PICKER_TEMPLATE
     from build_release import validate_portable_database
+    from build_discovery import build as build_discovery
 
 ROOT = Path(__file__).resolve().parents[1]
 SEGMENT_SIZE = 8 * 1024 * 1024
@@ -87,11 +89,13 @@ def build(output: Path) -> dict:
         destination = output / relative
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(ROOT / relative, destination)
+    discovery = build_discovery(output, database, pack)
     total = sum(path.stat().st_size for path in output.rglob('*') if path.is_file())
     if total >= 1_000_000_000:
         raise SystemExit(f'Pages output exceeds the 1 GB publication limit: {total:,} bytes')
     return {'site_bytes': total, 'index_download_bytes': manifest['database']['download_bytes'],
-            'documents': manifest['documents'], 'segments': len(db_segments) + len(pack_segments)}
+            'documents': manifest['documents'], 'segments': len(db_segments) + len(pack_segments),
+            **discovery}
 
 
 def main() -> None:

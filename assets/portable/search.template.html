@@ -718,6 +718,8 @@
       <div class="empty"><strong>Runs entirely on this device.</strong>The database stays in your browser memory and is never uploaded.</div>
     </section>
 
+    <!-- DISCOVERY_LINKS -->
+
     <footer>Independent, unofficial research aid. Snapshot collected July 31–August 1, 2026; this is not a live statement of current law or legal advice. Verify currency, precedential status, jurisdiction, and subsequent treatment. <a href="https://github.com/sfmth/immigration-regulations/blob/main/RIGHTS_AND_DISTRIBUTION.md">Rights and distribution</a> · <a href="https://github.com/sfmth/immigration-regulations/blob/main/THIRD_PARTY_NOTICES.md">Third-party notices</a> · <a href="https://github.com/sfmth/immigration-regulations">Source and offline files</a></footer>
   </main>
 
@@ -1696,6 +1698,19 @@
         statusNode.textContent = `Ready — ${fullText.toLocaleString()} rights-cleared full-text records available.`;
         resultsNode.innerHTML = '<div class="empty"><strong>Your corpus is ready.</strong>Choose an example above or search for an immigration topic.</div>';
         queryInput.focus();
+        if (HOSTED_MANIFEST) {
+          const parameters = new URL(location.href).searchParams;
+          const requestedSource = parameters.get('source');
+          if (requestedSource && [...sourceSelect.options].some(option => option.value === requestedSource)) sourceSelect.value = requestedSource;
+          const requestedDocument = parameters.get('document');
+          if (requestedDocument && /^\d+$/.test(requestedDocument)) {
+            const statement = database.prepare('SELECT * FROM documents WHERE id = ? AND xml_pack_length IS NOT NULL');
+            statement.bind([Number(requestedDocument)]);
+            const result = statement.step() ? statement.getAsObject() : null;
+            statement.free();
+            if (result) openXmlViewer(result);
+          }
+        }
         return true;
       } catch (error) {
         if (database) database.close();

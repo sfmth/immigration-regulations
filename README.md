@@ -1,5 +1,9 @@
 # U.S. Immigration Legal Corpus
 
+[Search the live corpus](https://sfmth.github.io/immigration-regulations/) ·
+[Browse source collections](https://sfmth.github.io/immigration-regulations/browse/) ·
+[Collection scope and limitations](https://sfmth.github.io/immigration-regulations/about/)
+
 This project provides a provenance-preserving, searchable snapshot of public U.S. immigration authorities and officer procedures. The public repository contains the collector and search software, a rights-filtered portable database, approved legal XML, source metadata, checksums, and official links. The collector can also maintain a local research workspace with original files, extracted text, topic tags, and citations in SQLite.
 
 The initial collection was made on July 31–August 1, 2026 (America/Los_Angeles / UTC). It is a research corpus, not legal advice and not a representation that every item remains good law.
@@ -79,6 +83,45 @@ python3 scripts/build_pages.py --output _site
 
 Use a fresh, empty output directory for each build. GitHub Pages serves the
 generated static segments, rather than attempting to serve Git LFS pointers.
+
+### Search discovery and Google Analytics
+
+The build also generates ordinary HTML collection directories and approved
+document excerpts, an XML sitemap at `sitemap.xml`, canonical URLs, social
+metadata, breadcrumbs, and WebSite/Dataset structured data. These source pages
+work without JavaScript or downloading the search index. Repeated official URLs
+share one excerpt page; metadata-only records link to their official source.
+No claim of current law is inferred from a snapshot's publication on the site.
+
+Site settings are in `config/site.json`:
+
+- `base_url`: the exact public HTTPS project URL, ending with `/`.
+- `google_analytics_id`: this site's GA4 `G-…` measurement ID. Empty disables
+  Analytics; the build never substitutes another site's ID.
+- `google_site_verification`: the `content` value of a Google Search Console
+  HTML verification tag, when that verification method is used.
+
+The repository variables `GA4_MEASUREMENT_ID` and `GOOGLE_SITE_VERIFICATION`
+override the corresponding file settings in GitHub Actions. These public IDs
+and verification tokens are not API secrets. After changing a variable, rerun
+the Pages workflow to publish it.
+
+For Search Console, add the exact URL-prefix property
+`https://sfmth.github.io/immigration-regulations/`, verify ownership, and submit
+`https://sfmth.github.io/immigration-regulations/sitemap.xml`. Generating a
+sitemap does not submit it to Search Console or guarantee indexing. Google
+controls crawling, canonical selection, and indexing.
+
+GitHub Pages hosts this project in a subdirectory. The effective `robots.txt`
+is at `https://sfmth.github.io/robots.txt`; a project-local robots file cannot
+control the host's crawling rules. Do not overwrite host-wide rules for other
+projects when maintaining this site.
+
+The Analytics integration sends page views with URL queries and fragments
+removed, does not send typed legal search terms, disables Google Signals and
+advertising-personalization signals in its configuration, and honors Global
+Privacy Control and Do Not Track. Its current configuration and hosting
+behavior are described on the site's privacy page.
 
 ## Search
 
