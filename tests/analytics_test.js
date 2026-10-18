@@ -1,32 +1,48 @@
 #!/usr/bin/env node
 'use strict';
 const assert = require('node:assert/strict');
-const fs = require('node:fs');
+const { execFileSync } = require('node:child_process');
+const path = require('node:path');
 const vm = require('node:vm');
-const source = fs.readFileSync(require('node:path').join(__dirname, '../assets/site/analytics.js'), 'utf8');
-function run(id, navigator = {}) {
-  const scripts = [];
+const root = path.join(__dirname, '..');
+function render(id) {
+  return execFileSync('python3', ['-c',
+    'import sys; from scripts.build_discovery import analytics_tag; print(analytics_tag({"google_analytics_id":sys.argv[1]}))', id],
+    { cwd: root, encoding: 'utf8' }).trim();
+}
+assert.equal(render(''), '', 'A missing ID must emit no Analytics scripts');
+const id = 'G-TEST000001';
+const markup = render(id);
+const scripts = [...markup.matchAll(/<script([^>]*)>([\s\S]*?)<\/script>/g)];
+assert.equal(scripts.filter(script => script[1].includes('src=')).length, 1);
+assert(markup.includes(`<script async src="https://www.googletagmanager.com/gtag/js?id=${id}"></script>`));
+assert(markup.includes(`gtag('config', '${id}');`), 'Search Console needs the literal standard config call');
+assert(!markup.includes('__GA4_MEASUREMENT_ID__'));
+function run(navigator = {}) {
   const context = { URL, Date, navigator,
-    window: { IMMIGRATION_SITE: { google_analytics_id: id }, location: { href: 'https://example.test/legal/?q=private-search#private-fragment' } },
-    document: { title: 'Legal search', referrer: 'https://example.test/?email=private-referrer', createElement: () => ({}), head: { append: script => scripts.push(script) } } };
-  vm.runInNewContext(source, context);
-  return { scripts, queue: context.window.dataLayer || [] };
+    location: { href: 'https://example.test/legal/?q=private-search#private-fragment' },
+    document: { title: 'Legal search', referrer: 'https://example.test/?email=private-referrer' } };
+  context.window = context;
+  vm.createContext(context);
+  for (const script of scripts) if (!script[1].includes('src=')) vm.runInContext(script[2], context);
+  return context;
 }
-for (const [id, navigator] of [['', {}], ['invalid', {}], ['G-TEST000001', { globalPrivacyControl: true }], ['G-TEST000001', { doNotTrack: '1' }]]) {
-  const result = run(id, navigator);
-  assert.equal(result.scripts.length, 0);
-  assert.equal(result.queue.length, 0);
+for (const navigator of [{}, { globalPrivacyControl: true }, { doNotTrack: '1' }]) {
+  const context = run(navigator);
+  const optedOut = navigator.globalPrivacyControl === true || navigator.doNotTrack === '1';
+  assert.equal(context['ga-disable-' + id], optedOut);
+  const queue = context.dataLayer;
+  const serialized = JSON.stringify(queue);
+  for (const privateValue of ['private-search', 'private-fragment', 'private-referrer']) {
+    assert(!serialized.includes(privateValue));
+  }
+  assert.equal(queue.filter(event => event[0] === 'config').length, 1);
+  assert.equal(queue.filter(event => event[0] === 'event').length, 0, 'No duplicate manual page view');
+  assert.equal(queue[0][0], 'set', 'Privacy defaults must precede Google configuration');
+  assert.equal(queue[0][1].page_location, 'https://example.test/legal/');
+  assert.equal(queue[0][1].page_referrer, 'https://example.test/');
+  assert.equal(queue[0][1].allow_google_signals, false);
+  assert.equal(queue[0][1].allow_ad_personalization_signals, false);
+  assert.equal(queue.find(event => event[0] === 'config').length, 2, 'Preserve the unmodified standard config call');
 }
-const result = run('G-TEST000001');
-assert.equal(result.scripts.length, 1);
-assert.equal(result.scripts[0].src, 'https://www.googletagmanager.com/gtag/js?id=G-TEST000001');
-const serialized = JSON.stringify(result.queue);
-assert(!serialized.includes('private-search'));
-assert(!serialized.includes('private-fragment'));
-assert(!serialized.includes('private-referrer'));
-assert.equal(result.queue.filter(event => event[1] === 'page_view').length, 1);
-const config = result.queue.find(event => event[0] === 'config')[2];
-assert.equal(config.allow_google_signals, false);
-assert.equal(config.allow_ad_personalization_signals, false);
-assert.equal(config.page_location, 'https://example.test/legal/');
-console.log('Analytics privacy signals, activation, URL sanitization, and single page-view checks passed.');
+console.log('Standard Google snippet, privacy defaults, opt-out flags, URL sanitization, and single configuration checks passed.');

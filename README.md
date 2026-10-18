@@ -112,6 +112,12 @@ For Search Console, add the exact URL-prefix property
 sitemap does not submit it to Search Console or guarantee indexing. Google
 controls crawling, canonical selection, and indexing.
 
+The standard Google tag is emitted directly in each page's `<head>`, including
+the literal measurement ID, so Search Console can detect it in the homepage
+source when using Google Analytics ownership verification. Use the same Google
+account with edit access to that Analytics property. Privacy defaults are set
+before the unmodified Google snippet; there is one configuration call per page.
+
 GitHub Pages hosts this project in a subdirectory. The effective `robots.txt`
 is at `https://sfmth.github.io/robots.txt`; a project-local robots file cannot
 control the host's crawling rules. Do not overwrite host-wide rules for other
@@ -120,7 +126,8 @@ projects when maintaining this site.
 The Analytics integration sends page views with URL queries and fragments
 removed, does not send typed legal search terms, disables Google Signals and
 advertising-personalization signals in its configuration, and honors Global
-Privacy Control and Do Not Track. Its current configuration and hosting
+Privacy Control and Do Not Track using Google's data-collection opt-out flag.
+The Google tag library may still be downloaded. Its current configuration and hosting
 behavior are described on the site's privacy page.
 
 ## Search

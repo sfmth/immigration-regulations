@@ -49,6 +49,17 @@ def check(root: Path) -> None:
         path = root / url.removeprefix(base) / 'index.html'
         assert path.is_file(), f'Missing sitemap page: {url}'
         content = path.read_text()
+        head = content.split('</head>', 1)[0]
+        measurement_id = config['google_analytics_id']
+        if measurement_id:
+            loader = f'<script async src="https://www.googletagmanager.com/gtag/js?id={measurement_id}"></script>'
+            configure = f"gtag('config', '{measurement_id}');"
+            assert head.count(loader) == 1, f'Missing or repeated Google tag: {url}'
+            assert head.count(configure) == 1, f'Missing or repeated Analytics configuration: {url}'
+            assert head.index(loader) < 2_000_000, f'Google tag too deep in source: {url}'
+            assert 'assets/analytics.js' not in head, f'Duplicate Analytics loader: {url}'
+        else:
+            assert 'googletagmanager.com/gtag/js' not in head, f'Analytics enabled without ID: {url}'
         parser = Page()
         parser.feed(content)
         assert parser.canonical == [url], f'Invalid canonical: {url}'

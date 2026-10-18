@@ -65,6 +65,28 @@ def read_config() -> dict:
     return config
 
 
+def analytics_tag(config: dict) -> str:
+    measurement_id = config.get('google_analytics_id', '')
+    if not measurement_id:
+        return ''
+    if not re.fullmatch(r'G-[A-Z0-9]+', measurement_id):
+        raise ValueError('Invalid GA4 measurement ID')
+    defaults = (ROOT / 'assets/site/analytics.js').read_text().replace(
+        '__GA4_MEASUREMENT_ID__', measurement_id)
+    # Search Console inspects the homepage source for Google's standard snippet.
+    # Apply privacy defaults separately, before the unmodified Google tag.
+    return f'''<script>{defaults}</script>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id={measurement_id}"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){{dataLayer.push(arguments);}}
+  gtag('js', new Date());
+
+  gtag('config', '{measurement_id}');
+</script>'''
+
+
 def head(config: dict, relative: str, title: str, description: str, schema: dict | None = None,
          indexable: bool = True) -> str:
     base = config['base_url']
@@ -80,8 +102,7 @@ def head(config: dict, relative: str, title: str, description: str, schema: dict
 <meta property="og:url" content="{escaped(canonical)}">
 <meta name="twitter:card" content="summary"><meta name="twitter:title" content="{escaped(title)}">
 <meta name="twitter:description" content="{escaped(description)}">
-<script defer src="{escaped(base)}assets/site-config.js"></script>
-<script defer src="{escaped(base)}assets/analytics.js"></script>'''
+{analytics_tag(config)}'''
     if config.get('google_site_verification'):
         markup += f'\n<meta name="google-site-verification" content="{escaped(config["google_site_verification"])}">'
     if schema:
@@ -137,7 +158,6 @@ def build(output: Path, database_path: Path, pack_path: Path) -> dict:
     base = config['base_url']
     assets = output / 'assets'
     assets.mkdir(exist_ok=True)
-    shutil.copyfile(ROOT / 'assets/site/analytics.js', assets / 'analytics.js')
     shutil.copyfile(ROOT / 'assets/site/favicon.svg', assets / 'favicon.svg')
     (assets / 'site-config.js').write_text('window.IMMIGRATION_SITE = ' + json.dumps(config) + ';\n')
     pages = []
@@ -259,7 +279,7 @@ def build(output: Path, database_path: Path, pack_path: Path) -> dict:
     write('privacy/', 'Privacy & Google Analytics | Immigration Legal Corpus',
           'How local legal search, hosting requests, optional Google Analytics page views, and privacy signals are handled by this site.',
           f'''<h1>Privacy and analytics</h1><h2>Search stays on your device</h2><p>Full-text queries run in your browser. The site downloads a search index and retrieves compressed source passages as needed. The project does not operate a server endpoint that receives your typed legal searches. GitHub Pages and its delivery network receive ordinary requests for pages and corpus assets.</p>
-<h2>Google Analytics</h2><p>Google Analytics is {analytics_status}. When a measurement ID is configured, the integration sends page views to Google and may use Analytics cookies. It strips query strings and fragments from the page and referrer URLs it sends, does not send your typed search terms, and disables Google Signals and advertising-personalization signals in its configuration. Global Privacy Control and Do Not Track signals suppress this integration.</p><p>Google's own services and hosting infrastructure have their own policies. See <a href="https://policies.google.com/privacy">Google's privacy policy</a> and <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a>.</p><h2>Official-source links</h2><p>Following an official-source link opens another website whose privacy rules apply. Do not enter personal immigration case information into this public research tool.</p>''')
+<h2>Google Analytics</h2><p>Google Analytics is {analytics_status}. When a measurement ID is configured, the integration sends page views to Google and may use Analytics cookies. It strips query strings and fragments from the page and referrer URLs it sends, does not send your typed search terms, and disables Google Signals and advertising-personalization signals in its configuration. Global Privacy Control and Do Not Track signals disable Analytics data collection through Google's opt-out setting. The Google tag library may still be downloaded.</p><p>Google's own services and hosting infrastructure have their own policies. See <a href="https://policies.google.com/privacy">Google's privacy policy</a> and <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a>.</p><h2>Official-source links</h2><p>Following an official-source link opens another website whose privacy rules apply. Do not enter personal immigration case information into this public research tool.</p>''')
     not_found = page(config, '404.html', 'Page not found | Immigration Legal Corpus', 'The requested source page could not be found.',
                      f'<h1>Page not found</h1><p>Return to <a href="{base}browse/">the source directory</a> or <a href="{base}">search the corpus</a>.</p>', indexable=False)
     (output / '404.html').write_text(not_found)
