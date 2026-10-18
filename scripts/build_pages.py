@@ -72,9 +72,15 @@ def build(output: Path) -> dict:
     }
     (output / 'corpus-manifest.json').write_text(json.dumps(manifest, indent=2) + '\n')
     page = prepared_template(PICKER_TEMPLATE)
+    before_picker, start_marker, picker_and_rest = page.partition('<!-- OFFLINE_PICKER_START -->')
+    _, end_marker, after_picker = picker_and_rest.partition('<!-- OFFLINE_PICKER_END -->')
+    if not start_marker or not end_marker:
+        raise SystemExit('Portable template is missing the offline picker boundaries.')
+    page = before_picker + after_picker
     page = page.replace('const HOSTED_MANIFEST = null;',
                         'const HOSTED_MANIFEST = ' + json.dumps(manifest, separators=(',', ':')) + ';', 1)
     page = page.replace('Local research database', 'Independent legal research')
+    page = page.replace('Select the packaged search database to begin.', 'Loading online search…')
     (output / 'index.html').write_text(page, encoding='utf-8')
     (output / '.nojekyll').touch()
     for relative in PUBLIC_NOTICES:

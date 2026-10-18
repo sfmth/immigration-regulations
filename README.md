@@ -63,11 +63,12 @@ Pushes to `main` then validate and publish the search app; pull requests build
 and test without deploying. The build fetches only the two portable LFS assets
 and never publishes the raw collection. No API key is needed for hosting.
 
-The hosted app offers **Load online search** alongside the offline file picker.
-It downloads a compressed index, checks each segment's SHA-256, and retrieves
+The hosted app loads online search automatically when the page opens, with
+download progress and a retry button if loading fails. It downloads a compressed
+index, checks each segment's SHA-256, and retrieves
 compressed passages in small segments as needed. Searches run in the browser.
 The complete index occupies about 185 MiB in memory before SQLite overhead;
-the online button shows the actual compressed transfer size before downloading.
+the loading panel shows the actual compressed transfer size and progress.
 This snapshot is dated July 31–August 1, 2026, not continuously updated law.
 
 To stage the same site locally:

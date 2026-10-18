@@ -652,6 +652,7 @@
       <h2 id="search-title">Search the authorities</h2>
       <p class="lede">Search statutes, regulations, officer manuals, agency precedent, visa guidance, and denaturalization procedure. The public package contains approved extracted text and legal XML—not mirrored agency webpages, graphics, seals, or original binary files.</p>
 
+      <!-- OFFLINE_PICKER_START -->
       <div class="database-loader" id="database-loader">
         <input id="database-file" type="file" accept=".sqlite,.sqlite3,.db,.pack,application/vnd.sqlite3" multiple hidden>
         <button class="database-button" id="database-button" type="button">Choose search files</button>
@@ -661,9 +662,10 @@
         </div>
         <div class="database-progress" id="database-progress">No server or internet connection is required.</div>
       </div>
+      <!-- OFFLINE_PICKER_END -->
 
       <div class="database-loader" id="online-loader" hidden>
-        <button class="database-button" id="online-button" type="button">Load online search</button>
+        <button class="database-button" id="online-button" type="button" hidden>Retry loading</button>
         <div class="database-copy">
           <strong id="online-summary">Search this published snapshot</strong>
           <span id="online-description">The index loads once per visit. Passages download as needed; searches run on your device.</span>
@@ -1653,11 +1655,11 @@
       const file = selected.find(item => /\.(sqlite|sqlite3|db)$/i.test(item.name));
       const pack = selected.find(item => /\.pack$/i.test(item.name));
       if (!file || !pack) {
-        databaseProgress.textContent = 'Select both immigration-search.sqlite and immigration-search-text.pack.';
-        return;
+        if (databaseProgress) databaseProgress.textContent = 'Select both immigration-search.sqlite and immigration-search-text.pack.';
+        return false;
       }
-      databaseProgress.textContent = `Loading ${file.name} (${(file.size / 1048576).toFixed(1)} MB)…`;
-      databaseButton.disabled = true;
+      if (databaseProgress) databaseProgress.textContent = `Loading ${file.name} (${(file.size / 1048576).toFixed(1)} MB)…`;
+      if (databaseButton) databaseButton.disabled = true;
       try {
         const SQL = await sqlReady;
         const bytes = new Uint8Array(await file.arrayBuffer());
@@ -1687,7 +1689,7 @@
           sourceSelect.append(option);
         }
         sourceStatement.free();
-        databaseLoader.hidden = true;
+        if (databaseLoader) databaseLoader.hidden = true;
         document.querySelector('#online-loader').hidden = true;
         form.hidden = false;
         examples.hidden = false;
@@ -1699,8 +1701,9 @@
         if (database) database.close();
         database = null;
         textPack = null;
-        databaseProgress.textContent = error.message || String(error);
-        databaseButton.disabled = false;
+        if (databaseProgress) databaseProgress.textContent = error.message || String(error);
+        if (databaseButton) databaseButton.disabled = false;
+        if (HOSTED_MANIFEST) throw error;
         return false;
       }
     }
@@ -1712,11 +1715,10 @@
       const megabytes = (HOSTED_MANIFEST.database.download_bytes / 1048576).toFixed(0);
       onlineLoader.hidden = false;
       document.querySelector('#online-summary').textContent = `${HOSTED_MANIFEST.documents.toLocaleString()} records · ${megabytes} MB index download`;
-      onlineProgress.textContent = 'Snapshot: July 31–August 1, 2026. Use the local file picker above for offline files.';
-      statusNode.textContent = 'Load the online index or select your offline search files.';
-      onlineButton.addEventListener('click', async () => {
+      statusNode.textContent = 'Loading online search…';
+      async function loadOnlineSearch() {
+        onlineButton.hidden = true;
         onlineButton.disabled = true;
-        databaseButton.disabled = true;
         onlineProgress.textContent = 'Downloading and checking the search index…';
         try {
           const files = await LegalCorpusHosting.load(HOSTED_MANIFEST, location.href, (loaded, total) => {
@@ -1724,30 +1726,33 @@
           });
           onlineProgress.textContent = 'Opening the search index…';
           const ready = await openPackage(files);
-          if (!ready) throw new Error(databaseProgress.textContent);
+          if (!ready) throw new Error('Unable to open the online search index.');
         } catch (error) {
           onlineProgress.textContent = error.message || String(error);
+          statusNode.textContent = 'Search could not load. Please retry.';
+          onlineButton.hidden = false;
           onlineButton.disabled = false;
-          databaseButton.disabled = false;
         }
-      });
+      }
+      onlineButton.addEventListener('click', loadOnlineSearch);
+      loadOnlineSearch();
     }
 
-    databaseButton.addEventListener('click', () => databaseFile.click());
-    databaseFile.addEventListener('change', () => {
+    databaseButton?.addEventListener('click', () => databaseFile.click());
+    databaseFile?.addEventListener('change', () => {
       if (databaseFile.files.length) openPackage(databaseFile.files);
     });
     for (const eventName of ['dragenter', 'dragover']) {
-      databaseLoader.addEventListener(eventName, event => {
+      databaseLoader?.addEventListener(eventName, event => {
         event.preventDefault(); databaseLoader.classList.add('dragging');
       });
     }
     for (const eventName of ['dragleave', 'drop']) {
-      databaseLoader.addEventListener(eventName, event => {
+      databaseLoader?.addEventListener(eventName, event => {
         event.preventDefault(); databaseLoader.classList.remove('dragging');
       });
     }
-    databaseLoader.addEventListener('drop', event => {
+    databaseLoader?.addEventListener('drop', event => {
       if (event.dataTransfer.files.length) openPackage(event.dataTransfer.files);
     });
     form.addEventListener('submit', event => { event.preventDefault(); runSearch(); });
