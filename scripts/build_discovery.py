@@ -289,7 +289,14 @@ def build(output: Path, database_path: Path, pack_path: Path) -> dict:
         {'@type': 'Dataset', 'name': 'U.S. Immigration Legal Corpus — July–August 2026 snapshot', 'url': base + 'browse/',
          'description': '2,607 source records across statutes, regulations, manuals, agency decisions, and court-opinion catalog records, with source-specific rights classifications.',
          'temporalCoverage': '2026-07-31/2026-08-01', 'creator': {'@type': 'Person', 'name': 'sfmth', 'url': 'https://github.com/sfmth'},
-         'isAccessibleForFree': True, 'citation': base + 'reports/public_rights_manifest.csv'}]}
+         'isAccessibleForFree': True, 'citation': base + 'reports/public_rights_manifest.csv',
+         'license': {
+             '@type': 'CreativeWork',
+             'name': 'Source-specific rights and redistribution terms (reviewed October 17, 2026)',
+             'url': base + 'RIGHTS_AND_DISTRIBUTION.md',
+             'description': 'No blanket license applies to the collected legal authorities. '
+                            'Reuse follows the source-specific policy and per-record rights manifest. '
+                            'The MIT license covers original project software and documentation only.'}}]}
     homepage = output / 'index.html'
     content = homepage.read_text()
     content = re.sub(r'<title>.*?</title>', '', content, count=1, flags=re.S)

@@ -44,6 +44,7 @@ def check(root: Path) -> None:
     assert base in urls and base + 'browse/' in urls
     parsers = {}
     titles = []
+    datasets = 0
     for url in urls:
         assert url.startswith(base) and not urlsplit(url).query and not urlsplit(url).fragment
         path = root / url.removeprefix(base) / 'index.html'
@@ -70,7 +71,25 @@ def check(root: Path) -> None:
         assert title.strip()
         titles.append(title)
         for script in re.findall(r'<script type="application/ld\+json">(.*?)</script>', content, re.S):
-            json.loads(script)
+            structured = json.loads(script)
+            for item in structured.get('@graph', [structured]):
+                types = item.get('@type', [])
+                if types != 'Dataset' and 'Dataset' not in types:
+                    continue
+                datasets += 1
+                license_info = item.get('license')
+                assert license_info, f'Dataset missing license information: {url}'
+                if isinstance(license_info, dict):
+                    assert license_info.get('@type') == 'CreativeWork' and license_info.get('name'), f'Invalid custom license: {url}'
+                    license_url = license_info.get('url', '')
+                else:
+                    assert isinstance(license_info, str), f'Invalid license type: {url}'
+                    license_url = license_info
+                parsed_license = urlsplit(license_url)
+                assert parsed_license.scheme == 'https' and parsed_license.netloc, f'Invalid license URL: {url}'
+                if license_url.startswith(base):
+                    license_path = root / parsed_license.path.removeprefix(urlsplit(base).path)
+                    assert license_path.is_file(), f'Missing published license document: {license_url}'
         for href in parser.links:
             linked = urljoin(url, href)
             target = urlsplit(linked)
@@ -94,6 +113,7 @@ def check(root: Path) -> None:
             if linked in parsers and linked not in reachable:
                 pending.append(linked)
     assert reachable == set(urls), 'Sitemap contains orphaned pages'
+    assert datasets, 'Missing Dataset structured data'
     home = (root / 'index.html').read_text()
     assert 'type="file"' not in home and 'Choose search files' not in home
     assert 'loadOnlineSearch();' in home and 'browse-title' in home
